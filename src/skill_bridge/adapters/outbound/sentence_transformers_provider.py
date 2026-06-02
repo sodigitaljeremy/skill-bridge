@@ -25,9 +25,10 @@ class SentenceTransformersEmbeddingProvider:
         cache_str = str(cache_folder) if cache_folder is not None else None
         self._model = SentenceTransformer(model_name, cache_folder=cache_str, device=device)
         # Compat ST v5 (get_embedding_dimension) ↔ v4 (get_sentence_embedding_dimension).
-        get_dim = getattr(
-            self._model, "get_embedding_dimension", None
-        ) or self._model.get_sentence_embedding_dimension
+        get_dim = (
+            getattr(self._model, "get_embedding_dimension", None)
+            or self._model.get_sentence_embedding_dimension
+        )
         self._dimension = int(get_dim())
 
     @property

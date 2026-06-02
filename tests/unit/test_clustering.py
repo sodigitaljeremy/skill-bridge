@@ -27,16 +27,14 @@ def clustering_fixture(sample_skills, sample_resources):
 
 
 @pytest.mark.unit
-def test_silhouette_picks_k_in_expected_band(clustering_fixture) -> None:
+def test_silhouette_picks_k_matching_archetype_count(clustering_fixture) -> None:
     _skills, _learners, _profiles, result = clustering_fixture
-    # 4 archetypes latents, mais silhouette pure peut regrouper les "high archetypes"
-    # (strong_calc_weak_geo / balanced_strong / strong_reasoning) en un seul cluster vs
-    # struggling — d'où la bande [2, 5]. Le sanity-check archétype↔cluster (test suivant)
-    # vérifie que la structure reste informative quel que soit k.
-    assert 2 <= result.k <= 5, (
-        f"k={result.k} hors bande sensée (silhouette : {result.silhouette_by_k})"
+    # Avec 4 archetypes spécialisés par *forme* (moyennes globales comparables), la silhouette
+    # doit naturellement piquer autour de k=4 (toléré [3, 5] selon les hasards d'init KMeans).
+    assert 3 <= result.k <= 5, (
+        f"k={result.k} hors bande attendue (silhouette : {result.silhouette_by_k})"
     )
-    assert result.silhouette > 0.20
+    assert result.silhouette > 0.25
     # Sanity sur l'algo : le k retenu doit bien être l'argmax des silhouettes calculées.
     assert result.silhouette == max(result.silhouette_by_k.values())
 
@@ -58,7 +56,9 @@ def test_each_archetype_has_a_dominant_cluster(clustering_fixture) -> None:
         assert counts, f"{archetype} sans apprenant ?"
         dominant, n = counts.most_common(1)[0]
         purity = n / sum(counts.values())
-        assert purity >= 0.60, (
+        # Avec archetypes spécialisés par forme (sigma=0.10), pureté observée >= 88%
+        # sur seed=42 ; seuil à 0.80 pour absorber la variance d'init KMeans.
+        assert purity >= 0.80, (
             f"{archetype} dispersé : cluster majoritaire={dominant} purity={purity:.0%}"
         )
 
@@ -74,7 +74,7 @@ def test_cluster_labels_mention_geometry_for_lea_archetype(clustering_fixture) -
     counts: Counter[int] = Counter(
         cluster_by_mbox[mbox]
         for mbox, archetype in archetype_by_mbox.items()
-        if archetype == "strong_calc_weak_geo"
+        if archetype == "calc_specialist"
     )
     dominant_cluster, _ = counts.most_common(1)[0]
     centroid = result.centroids_per_domain[dominant_cluster]

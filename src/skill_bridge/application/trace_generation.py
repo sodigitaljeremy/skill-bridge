@@ -2,10 +2,11 @@
 
 Reproductible via une seed unique (numpy + Faker). Trois mécanismes clés :
 
-1. **Archetypes latents** : chaque apprenant est tiré d'un de quatre profils (fort calcul /
-   faible géométrie, équilibré fort, en difficulté, fort en raisonnement), avec un léger
-   bruit gaussien. Léa est toujours assignée à ``strong_calc_weak_geo``. Objectif : que le
-   clustering du Lot 2 retrouve des groupes nets et interprétables.
+1. **Archetypes latents par *spécialisation*** : 3 profils spécialistes (calcul / géométrie+
+   mesures / raisonnement) à **moyenne globale comparable**, plus 1 profil en difficulté
+   générale (bas partout). Les profils diffèrent par la *forme* du vecteur d'ability — pas
+   par la magnitude — pour que KMeans (euclidien) capte la spécialisation plutôt que le
+   niveau global. Léa = ``calc_specialist``. Bruit gaussien sigma = 0.10.
 2. **Vecteur d'ability par domaine** : la probabilité de succès d'une trace dépend de
    l'ability moyenne de l'apprenant sur les domaines de la ressource.
 3. **Échantillonnage stratifié par domaine** : chaque apprenant pratique tous les domaines,
@@ -47,42 +48,47 @@ ACTIVITY_BASE_URI: Final[str] = "http://skillbridge.local/resource/"
 NAMESPACE_SKILLBRIDGE: Final[UUID] = uuid5(NAMESPACE_URL, "https://skillbridge.local/")
 LEA_LEARNER_ID: Final[UUID] = uuid5(NAMESPACE_SKILLBRIDGE, "learner/lea-martin")
 
-# --- Archetypes latents ---
+# --- Archetypes latents : 3 spécialistes (moyenne globale ~ 0.63) + 1 en difficulté ---
+#
+# Les 3 spécialistes ont la MÊME moyenne globale et diffèrent par la FORME (pics sur des
+# domaines différents). Cela force KMeans euclidien à capter la spécialisation plutôt que
+# le niveau global. Le 4ᵉ archetype (struggling) est délibérément bas partout — il se
+# distingue par sa magnitude, pas par sa forme.
 
-LEA_ARCHETYPE: Final[str] = "strong_calc_weak_geo"
+LEA_ARCHETYPE: Final[str] = "calc_specialist"
 
 ARCHETYPES: Final[Mapping[str, Mapping[str, float]]] = {
-    "strong_calc_weak_geo": {
+    "calc_specialist": {
         "calcul_de_base": 0.85,
-        "calcul_avance": 0.82,
-        "fractions_decimaux": 0.75,
-        "geometrie_mesures": 0.40,
+        "calcul_avance": 0.85,
+        "fractions_decimaux": 0.55,
+        "geometrie_mesures": 0.45,
         "unites_temps": 0.55,
-        "resolution_problemes": 0.75,
+        "resolution_problemes": 0.55,
     },
-    "balanced_strong": {
-        "calcul_de_base": 0.78,
-        "calcul_avance": 0.75,
-        "fractions_decimaux": 0.75,
-        "geometrie_mesures": 0.78,
-        "unites_temps": 0.75,
-        "resolution_problemes": 0.78,
+    "geo_specialist": {
+        "calcul_de_base": 0.55,
+        "calcul_avance": 0.45,
+        "fractions_decimaux": 0.55,
+        "geometrie_mesures": 0.85,
+        "unites_temps": 0.85,
+        "resolution_problemes": 0.55,
+    },
+    "reasoning_specialist": {
+        "calcul_de_base": 0.55,
+        "calcul_avance": 0.55,
+        "fractions_decimaux": 0.85,
+        "geometrie_mesures": 0.45,
+        "unites_temps": 0.55,
+        "resolution_problemes": 0.85,
     },
     "struggling": {
-        "calcul_de_base": 0.48,
-        "calcul_avance": 0.40,
-        "fractions_decimaux": 0.40,
+        "calcul_de_base": 0.42,
+        "calcul_avance": 0.42,
+        "fractions_decimaux": 0.42,
         "geometrie_mesures": 0.42,
-        "unites_temps": 0.45,
+        "unites_temps": 0.42,
         "resolution_problemes": 0.42,
-    },
-    "strong_reasoning": {
-        "calcul_de_base": 0.55,
-        "calcul_avance": 0.50,
-        "fractions_decimaux": 0.55,
-        "geometrie_mesures": 0.62,
-        "unites_temps": 0.55,
-        "resolution_problemes": 0.92,
     },
 }
 ARCHETYPE_NOISE_SIGMA: Final[float] = 0.10

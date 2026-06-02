@@ -90,11 +90,11 @@ def test_archetypes_are_separable(sample_skills, sample_resources) -> None:
 
 
 @pytest.mark.unit
-def test_lea_is_assigned_to_strong_calc_weak_geo(sample_skills, sample_resources) -> None:
+def test_lea_is_assigned_to_calc_specialist(sample_skills, sample_resources) -> None:
     gen = TraceGenerationService(skills=sample_skills, resources=sample_resources)
     learners, _ = gen.generate(ScenarioConfig(n_learners=10, seed=3))
     lea = next(x for x in learners if x.learner_id == LEA_LEARNER_ID)
-    assert lea.archetype == LEA_ARCHETYPE
+    assert lea.archetype == LEA_ARCHETYPE == "calc_specialist"
     # Léa : sans bruit, son ability colle au centroïde.
     centroid = ARCHETYPES[LEA_ARCHETYPE]
     for domain, expected in centroid.items():
