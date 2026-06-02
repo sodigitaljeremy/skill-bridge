@@ -1,0 +1,30 @@
+{
+  "version": "0.1.0",
+  "note": "Mappings illustratifs vers des nœuds ESCO. Les URIs ci-dessous suivent la forme canonique ESCO (http://data.europa.eu/esco/skill/<uuid>) mais doivent être vérifiées et corrigées via https://esco.ec.europa.eu/ avant tout usage en production. L'objectif au niveau 1 est de démontrer le mécanisme d'interopérabilité sémantique (alignement référentiel maison <-> référentiel pivot), pas de fournir un mapping ESCO de référence.",
+  "mappings": {
+    "resolution_problemes": [
+      "http://data.europa.eu/esco/skill/0c0fe33d-d1c6-409d-b03e-d0cefe61ad11"
+    ],
+    "calcul_mental": [
+      "http://data.europa.eu/esco/skill/2ec70df4-23e7-44eb-bb6c-ce6bce6da7c2"
+    ],
+    "addition_entiers": [
+      "http://data.europa.eu/esco/skill/2ec70df4-23e7-44eb-bb6c-ce6bce6da7c2"
+    ],
+    "multiplication_posee": [
+      "http://data.europa.eu/esco/skill/2ec70df4-23e7-44eb-bb6c-ce6bce6da7c2"
+    ],
+    "division_euclidienne": [
+      "http://data.europa.eu/esco/skill/2ec70df4-23e7-44eb-bb6c-ce6bce6da7c2"
+    ],
+    "perimetres": [
+      "http://data.europa.eu/esco/skill/a8c1c2d3-e4f5-4789-90bc-def123456789"
+    ],
+    "aires": [
+      "http://data.europa.eu/esco/skill/a8c1c2d3-e4f5-4789-90bc-def123456789"
+    ],
+    "conversions_unites": [
+      "http://data.europa.eu/esco/skill/b7d2e3f4-1a2b-4c3d-9e4f-50a6b7c8d9e0"
+    ]
+  }
+}

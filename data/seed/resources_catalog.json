@@ -1,0 +1,206 @@
+{
+  "version": "0.1.0",
+  "description": "Catalogue de ressources éducatives (maths primaire) — exercices, leçons et quiz tagués par compétences du référentiel maison.",
+  "resources": [
+    {
+      "resource_id": "EX001",
+      "title": "Additions à un chiffre",
+      "type": "exercise",
+      "grade_level": 1,
+      "estimated_duration_s": 120,
+      "skill_ids": ["tables_addition", "addition_entiers"]
+    },
+    {
+      "resource_id": "EX002",
+      "title": "Additions à deux chiffres sans retenue",
+      "type": "exercise",
+      "grade_level": 2,
+      "estimated_duration_s": 180,
+      "skill_ids": ["addition_entiers"]
+    },
+    {
+      "resource_id": "EX003",
+      "title": "Additions à deux chiffres avec retenue",
+      "type": "exercise",
+      "grade_level": 2,
+      "estimated_duration_s": 240,
+      "skill_ids": ["addition_entiers"]
+    },
+    {
+      "resource_id": "EX004",
+      "title": "Soustractions sans emprunt",
+      "type": "exercise",
+      "grade_level": 2,
+      "estimated_duration_s": 180,
+      "skill_ids": ["soustraction_entiers"]
+    },
+    {
+      "resource_id": "EX005",
+      "title": "Soustractions avec emprunt",
+      "type": "exercise",
+      "grade_level": 3,
+      "estimated_duration_s": 240,
+      "skill_ids": ["soustraction_entiers"]
+    },
+    {
+      "resource_id": "EX006",
+      "title": "Tables de multiplication 2 à 5",
+      "type": "exercise",
+      "grade_level": 2,
+      "estimated_duration_s": 180,
+      "skill_ids": ["tables_multiplication"]
+    },
+    {
+      "resource_id": "EX007",
+      "title": "Tables de multiplication 6 à 9",
+      "type": "exercise",
+      "grade_level": 3,
+      "estimated_duration_s": 240,
+      "skill_ids": ["tables_multiplication"]
+    },
+    {
+      "resource_id": "EX008",
+      "title": "Multiplication posée à deux chiffres",
+      "type": "exercise",
+      "grade_level": 4,
+      "estimated_duration_s": 300,
+      "skill_ids": ["multiplication_posee", "tables_multiplication"]
+    },
+    {
+      "resource_id": "EX009",
+      "title": "Division euclidienne",
+      "type": "exercise",
+      "grade_level": 4,
+      "estimated_duration_s": 300,
+      "skill_ids": ["division_euclidienne", "tables_multiplication"]
+    },
+    {
+      "resource_id": "EX010",
+      "title": "Calcul mental rapide",
+      "type": "exercise",
+      "grade_level": 3,
+      "estimated_duration_s": 120,
+      "skill_ids": ["calcul_mental"]
+    },
+    {
+      "resource_id": "EX011",
+      "title": "Fractions simples - colorier",
+      "type": "exercise",
+      "grade_level": 3,
+      "estimated_duration_s": 180,
+      "skill_ids": ["fractions_simples"]
+    },
+    {
+      "resource_id": "EX012",
+      "title": "Comparer des nombres décimaux",
+      "type": "exercise",
+      "grade_level": 4,
+      "estimated_duration_s": 200,
+      "skill_ids": ["comparaison_decimaux", "nombres_decimaux"]
+    },
+    {
+      "resource_id": "EX013",
+      "title": "Calculer un périmètre",
+      "type": "exercise",
+      "grade_level": 3,
+      "estimated_duration_s": 240,
+      "skill_ids": ["perimetres"]
+    },
+    {
+      "resource_id": "EX014",
+      "title": "Calculer une aire",
+      "type": "exercise",
+      "grade_level": 4,
+      "estimated_duration_s": 240,
+      "skill_ids": ["aires"]
+    },
+    {
+      "resource_id": "EX015",
+      "title": "Lire l'heure",
+      "type": "exercise",
+      "grade_level": 2,
+      "estimated_duration_s": 180,
+      "skill_ids": ["lecture_heure"]
+    },
+    {
+      "resource_id": "LE001",
+      "title": "Découvrir l'addition",
+      "type": "lesson",
+      "grade_level": 1,
+      "estimated_duration_s": 600,
+      "skill_ids": ["addition_entiers", "tables_addition"]
+    },
+    {
+      "resource_id": "LE002",
+      "title": "Les fractions, c'est quoi ?",
+      "type": "lesson",
+      "grade_level": 3,
+      "estimated_duration_s": 600,
+      "skill_ids": ["fractions_simples"]
+    },
+    {
+      "resource_id": "LE003",
+      "title": "Comprendre la division",
+      "type": "lesson",
+      "grade_level": 4,
+      "estimated_duration_s": 720,
+      "skill_ids": ["division_euclidienne"]
+    },
+    {
+      "resource_id": "LE004",
+      "title": "Découvrir la symétrie",
+      "type": "lesson",
+      "grade_level": 3,
+      "estimated_duration_s": 600,
+      "skill_ids": ["symetrie_axiale", "figures_planes"]
+    },
+    {
+      "resource_id": "LE005",
+      "title": "Les unités de mesure",
+      "type": "lesson",
+      "grade_level": 3,
+      "estimated_duration_s": 600,
+      "skill_ids": ["unites_mesure_longueur", "conversions_unites"]
+    },
+    {
+      "resource_id": "QZ001",
+      "title": "Quiz - calculs simples",
+      "type": "quiz",
+      "grade_level": 2,
+      "estimated_duration_s": 300,
+      "skill_ids": ["addition_entiers", "soustraction_entiers", "tables_addition"]
+    },
+    {
+      "resource_id": "QZ002",
+      "title": "Quiz - tables de multiplication",
+      "type": "quiz",
+      "grade_level": 3,
+      "estimated_duration_s": 300,
+      "skill_ids": ["tables_multiplication"]
+    },
+    {
+      "resource_id": "QZ003",
+      "title": "Quiz - fractions et décimaux",
+      "type": "quiz",
+      "grade_level": 4,
+      "estimated_duration_s": 360,
+      "skill_ids": ["fractions_simples", "nombres_decimaux", "comparaison_decimaux"]
+    },
+    {
+      "resource_id": "QZ004",
+      "title": "Quiz - géométrie et mesures",
+      "type": "quiz",
+      "grade_level": 4,
+      "estimated_duration_s": 360,
+      "skill_ids": ["perimetres", "aires", "figures_planes"]
+    },
+    {
+      "resource_id": "QZ005",
+      "title": "Quiz - résolution de problèmes",
+      "type": "quiz",
+      "grade_level": 5,
+      "estimated_duration_s": 420,
+      "skill_ids": ["resolution_problemes", "calcul_mental"]
+    }
+  ]
+}

@@ -1,0 +1,115 @@
+{
+  "version": "0.1.0",
+  "source": "Référentiel maison inspiré du programme français cycles 2 et 3 (CP-CM2)",
+  "license": "CC0-1.0",
+  "skills": [
+    {
+      "id": "addition_entiers",
+      "preferred_label": "Addition d'entiers naturels",
+      "description": "Calculer la somme de deux ou trois entiers naturels, avec et sans retenue.",
+      "domain": "calcul_de_base"
+    },
+    {
+      "id": "soustraction_entiers",
+      "preferred_label": "Soustraction d'entiers naturels",
+      "description": "Calculer la différence de deux entiers naturels, avec et sans emprunt.",
+      "domain": "calcul_de_base"
+    },
+    {
+      "id": "tables_addition",
+      "preferred_label": "Tables d'addition",
+      "description": "Mémoriser et restituer les tables d'addition jusqu'à 10.",
+      "domain": "calcul_de_base"
+    },
+    {
+      "id": "tables_multiplication",
+      "preferred_label": "Tables de multiplication",
+      "description": "Mémoriser et restituer les tables de multiplication jusqu'à 10.",
+      "domain": "calcul_avance"
+    },
+    {
+      "id": "multiplication_posee",
+      "preferred_label": "Multiplication posée",
+      "description": "Effectuer la multiplication posée de deux nombres entiers à plusieurs chiffres.",
+      "domain": "calcul_avance"
+    },
+    {
+      "id": "division_euclidienne",
+      "preferred_label": "Division euclidienne",
+      "description": "Calculer le quotient et le reste d'une division euclidienne entière.",
+      "domain": "calcul_avance"
+    },
+    {
+      "id": "calcul_mental",
+      "preferred_label": "Calcul mental",
+      "description": "Effectuer des calculs simples de tête avec stratégies (décompositions, compléments).",
+      "domain": "calcul_avance"
+    },
+    {
+      "id": "fractions_simples",
+      "preferred_label": "Fractions simples",
+      "description": "Lire, écrire, comparer et représenter des fractions simples (1/2, 1/4, 3/4...).",
+      "domain": "fractions_decimaux"
+    },
+    {
+      "id": "nombres_decimaux",
+      "preferred_label": "Nombres décimaux",
+      "description": "Lire, écrire et placer des nombres décimaux sur une droite graduée.",
+      "domain": "fractions_decimaux"
+    },
+    {
+      "id": "comparaison_decimaux",
+      "preferred_label": "Comparaison de décimaux",
+      "description": "Comparer et ranger des nombres décimaux par ordre croissant ou décroissant.",
+      "domain": "fractions_decimaux"
+    },
+    {
+      "id": "perimetres",
+      "preferred_label": "Périmètres",
+      "description": "Calculer le périmètre de figures planes usuelles (carré, rectangle, polygones).",
+      "domain": "geometrie_mesures"
+    },
+    {
+      "id": "aires",
+      "preferred_label": "Aires",
+      "description": "Calculer l'aire de figures planes simples (carré, rectangle, triangle rectangle).",
+      "domain": "geometrie_mesures"
+    },
+    {
+      "id": "symetrie_axiale",
+      "preferred_label": "Symétrie axiale",
+      "description": "Identifier et construire le symétrique d'une figure par rapport à un axe.",
+      "domain": "geometrie_mesures"
+    },
+    {
+      "id": "figures_planes",
+      "preferred_label": "Reconnaissance de figures planes",
+      "description": "Reconnaître, nommer et décrire les figures planes usuelles (carré, rectangle, triangle, cercle).",
+      "domain": "geometrie_mesures"
+    },
+    {
+      "id": "lecture_heure",
+      "preferred_label": "Lecture de l'heure",
+      "description": "Lire l'heure sur une horloge à aiguilles et une horloge numérique.",
+      "domain": "unites_temps"
+    },
+    {
+      "id": "unites_mesure_longueur",
+      "preferred_label": "Unités de mesure de longueur",
+      "description": "Identifier et utiliser les unités usuelles de longueur (mm, cm, dm, m, km).",
+      "domain": "unites_temps"
+    },
+    {
+      "id": "conversions_unites",
+      "preferred_label": "Conversions d'unités",
+      "description": "Effectuer des conversions entre unités de longueur, de masse ou de contenance.",
+      "domain": "unites_temps"
+    },
+    {
+      "id": "resolution_problemes",
+      "preferred_label": "Résolution de problèmes",
+      "description": "Modéliser et résoudre un problème mathématique à partir d'un énoncé.",
+      "domain": "resolution_problemes"
+    }
+  ]
+}
