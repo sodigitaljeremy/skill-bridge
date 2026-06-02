@@ -4,13 +4,16 @@ Justification de chaque port (règle interne : pas de port sans 2ᵉ impl prévi
 
 - ``SkillRepository`` / ``LearningResourceRepository`` : substituables au Lot 4 par un
   catalogue dataspace (PDC).
-- ``TraceEncoder`` : seconde implémentation prévue (CSV brut / Matomo) pour démontrer le LRC
-  au Lot 3.
+- ``TraceEncoder`` : 2 impls — ``XApiJsonLinesEncoder`` (chemin xapi-direct) et
+  ``CsvTraceEncoder`` (chemin via-LRC, alimente ``/convert_custom``).
 - ``EmbeddingProvider`` : 2ᵉ impl déjà en place (``StubEmbeddingProvider`` côté tests, sans
   download de modèle) ; 3ᵉ impl plausible plus tard via une API distante.
+- ``TraceConverter`` (Lot 3) : 2 impls — ``LrcHttpConverter`` (HTTP multipart vers le
+  service LRC réel) et ``StubLrcConverter`` (tests unitaires, sans réseau).
 """
 
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
+from pathlib import Path
 from typing import Any, Protocol, runtime_checkable
 
 import numpy as np
@@ -46,3 +49,15 @@ class EmbeddingProvider(Protocol):
     def embed(self, texts: Sequence[str]) -> np.ndarray:
         """Retourne un tableau de forme ``(len(texts), dimension)`` (rows L2-normalisés)."""
         ...
+
+
+@runtime_checkable
+class TraceConverter(Protocol):
+    """Convertit un fichier de traces brutes (+ mapping) en statements xAPI normalisés.
+
+    Le contrat correspond à l'endpoint ``/convert_custom`` du LRC : on lui fournit un
+    fichier de données et un fichier YAML de mapping ; il retourne un flux de
+    statements (1 dict par trace).
+    """
+
+    def convert(self, data_path: Path, mapping_path: Path) -> Iterable[dict[str, Any]]: ...

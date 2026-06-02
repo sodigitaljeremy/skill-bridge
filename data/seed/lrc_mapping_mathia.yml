@@ -1,0 +1,96 @@
+version: 1.0
+input_format: "CSV"
+output_format: "xAPI"
+
+# Mapping consommé par le LRC /convert_custom. Les input_fields doivent matcher 1-pour-1
+# les colonnes émises par CsvTraceEncoder (cf. src/skill_bridge/adapters/outbound/
+# csv_trace_encoder.py : CSV_COLUMNS).
+#
+# Cible : statement xAPI conforme aux profils DASES LMS / Assessment (homePage pointe
+# l'app éducative, verb URI ADL standard, object.id stable et résolvable).
+
+mappings:
+  # ---------- Actor ----------
+  - input_fields:
+      - "learner_name"
+    output_fields:
+      output_field: "actor.account.name"
+
+  - input_fields:
+      - "learner_name"
+    output_fields:
+      output_field: "actor.account.homePage"
+      value: "https://mathia.example.com"
+
+  # ---------- Object ----------
+  - input_fields:
+      - "resource_id"
+    output_fields:
+      output_field: "object.id"
+      custom:
+        - "lambda rid: f'https://mathia.example.com/resource/{rid}'"
+
+  - input_fields:
+      - "resource_title"
+    output_fields:
+      output_field: "object.definition.name.fr-FR"
+
+  - input_fields:
+      - "resource_id"
+    output_fields:
+      # Activity type aligné sur les profils DASES — "interaction" couvre exercice/quiz/leçon
+      # à ce stade (le profil exact se précise via les verbes ci-dessous).
+      output_field: "object.definition.type"
+      value: "http://adlnet.gov/expapi/activities/interaction"
+
+  # ---------- Verb ----------
+  - input_fields:
+      - "verb"
+    output_fields:
+      description: "Map verbe Mathia -> URI ADL xAPI"
+      switch:
+        - condition: "lambda v: v == 'passed'"
+          output_field: "verb"
+          value: {"id": "http://adlnet.gov/expapi/verbs/passed", "display": {"en-US": "passed"}}
+        - condition: "lambda v: v == 'failed'"
+          output_field: "verb"
+          value: {"id": "http://adlnet.gov/expapi/verbs/failed", "display": {"en-US": "failed"}}
+        - condition: "lambda v: v == 'completed'"
+          output_field: "verb"
+          value: {"id": "http://adlnet.gov/expapi/verbs/completed", "display": {"en-US": "completed"}}
+        - condition: "lambda v: v == 'attempted'"
+          output_field: "verb"
+          value: {"id": "http://adlnet.gov/expapi/verbs/attempted", "display": {"en-US": "attempted"}}
+
+  # ---------- Result ----------
+  - input_fields:
+      - "score_scaled"
+    output_fields:
+      output_field: "result.score.scaled"
+      custom:
+        - "lambda s: float(s) if s not in ('', None) else None"
+
+  - input_fields:
+      - "verb"
+    output_fields:
+      description: "completion = True pour tous les verbes terminaux"
+      output_field: "result.completion"
+      value: true
+
+  # NB : result.success n'est pas dérivé ici. Le LRC à ce SHA interprète mal
+  # ``value: true/false`` dans un switch (input ré-injecté côté validation Pydantic).
+  # On laisse le consommateur déduire success du verb.id (passed/failed) en aval.
+
+  # ---------- Timestamp ----------
+  - input_fields:
+      - "timestamp"
+    output_fields:
+      output_field: "timestamp"
+      custom:
+        - "lambda ts: parse_date(ts)"
+
+metadata:
+  author: "SkillBridge (Jeremy Soriano)"
+  date:
+    publication: "2026-06-02"
+    update: "2026-06-02"
