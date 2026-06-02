@@ -68,8 +68,34 @@ def main() -> None:
         (enricher.enrich(t).to_dict() for t in traces),
         args.output_dir / "enriched.jsonl",
     )
+    # learners.jsonl = vérité-terrain (archetype, ability, grade). Émis pour le sanity-check
+    # du clustering du Lot 2 et le picking d'apprenants démo — NE PAS utiliser comme feature.
+    n_learners_written = write_jsonl(
+        (_learner_to_groundtruth_dict(learner) for learner in learners),
+        args.output_dir / "learners.jsonl",
+    )
 
-    _print_report(learners, traces, resources, skills, n_traces, n_enriched, args.output_dir)
+    _print_report(
+        learners,
+        traces,
+        resources,
+        skills,
+        n_traces,
+        n_enriched,
+        n_learners_written,
+        args.output_dir,
+    )
+
+
+def _learner_to_groundtruth_dict(learner) -> dict:
+    return {
+        "learner_id": str(learner.learner_id),
+        "mbox_sha1sum": learner.mbox_sha1sum,
+        "display_name": learner.display_name,
+        "grade_level": learner.grade_level,
+        "archetype": learner.archetype,
+        "ability": dict(learner.ability),
+    }
 
 
 def _print_report(
@@ -79,11 +105,12 @@ def _print_report(
     skills,
     n_traces,
     n_enriched,
+    n_learners_written,
     output_dir,
 ) -> None:
     print(
-        f"OK — {len(learners)} apprenants, {n_traces} traces xAPI, "
-        f"{n_enriched} traces enrichies dans {output_dir}/."
+        f"OK — {len(learners)} apprenants ({n_learners_written} dans learners.jsonl), "
+        f"{n_traces} traces xAPI, {n_enriched} traces enrichies dans {output_dir}/."
     )
     print()
     print("=== Stats ===")
