@@ -128,3 +128,51 @@ class LearningTrace(BaseModel):
     timestamp: datetime
     context: Context | None = None
     version: str = "1.0.3"
+
+
+# --- Lot 2 : profilage, clustering, recommandation ---
+
+
+class LearnerProfile(BaseModel):
+    """Profil de maîtrise *observé* d'un apprenant (dérivé des traces uniquement).
+
+    Ne lit jamais ``Learner.ability`` (vérité latente). Utilisé comme features de
+    clustering et input du moteur de recommandation.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    learner_id: UUID
+    mbox_sha1sum: str
+    grade_level: int = Field(ge=1, le=5)
+    mean_score_per_domain: dict[str, float]
+    success_rate_per_domain: dict[str, float]
+    mean_score_per_skill: dict[str, float]
+    attempted_resource_ids: list[str]
+    n_traces: int = Field(ge=0)
+
+
+class ClusterAssignment(BaseModel):
+    """Affectation d'un apprenant à un cluster, avec distance au centroïde."""
+
+    model_config = ConfigDict(frozen=True)
+
+    learner_id: UUID
+    cluster_id: int
+    cluster_label: str
+    distance_to_centroid: float
+
+
+class Recommendation(BaseModel):
+    """Recommandation explicable : score décomposé + phrase humaine."""
+
+    model_config = ConfigDict(frozen=True)
+
+    resource_id: str
+    title: str
+    score: float = Field(ge=0.0, le=1.0)
+    weak_skills_targeted: list[str]
+    grade_distance: int = Field(ge=0)
+    semantic_similarity: float = Field(ge=-1.0, le=1.0)
+    cluster_success_rate: float | None = Field(default=None, ge=0.0, le=1.0)
+    explanation: str
