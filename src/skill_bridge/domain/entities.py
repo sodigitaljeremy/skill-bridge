@@ -38,7 +38,7 @@ class LearningResource(BaseModel):
 
 
 class Learner(BaseModel):
-    """Apprenant avec un vecteur d'ability par domaine de compétence."""
+    """Apprenant : vecteur d'ability par domaine + archetype latent (label de profil)."""
 
     model_config = ConfigDict(frozen=True)
 
@@ -47,6 +47,7 @@ class Learner(BaseModel):
     mbox_sha1sum: str
     grade_level: int = Field(ge=1, le=5)
     ability: dict[str, float]
+    archetype: str | None = None
 
     @field_validator("ability")
     @classmethod

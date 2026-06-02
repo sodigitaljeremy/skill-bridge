@@ -201,6 +201,70 @@
       "grade_level": 5,
       "estimated_duration_s": 420,
       "skill_ids": ["resolution_problemes", "calcul_mental"]
+    },
+    {
+      "resource_id": "EX016",
+      "title": "Problèmes additifs (CE1)",
+      "type": "exercise",
+      "grade_level": 2,
+      "estimated_duration_s": 240,
+      "skill_ids": ["resolution_problemes", "addition_entiers"]
+    },
+    {
+      "resource_id": "EX017",
+      "title": "Problèmes multiplicatifs (CE2)",
+      "type": "exercise",
+      "grade_level": 3,
+      "estimated_duration_s": 300,
+      "skill_ids": ["resolution_problemes", "tables_multiplication"]
+    },
+    {
+      "resource_id": "EX018",
+      "title": "Problèmes à plusieurs étapes (CM1)",
+      "type": "exercise",
+      "grade_level": 4,
+      "estimated_duration_s": 360,
+      "skill_ids": ["resolution_problemes"]
+    },
+    {
+      "resource_id": "LE006",
+      "title": "Comprendre et résoudre un énoncé",
+      "type": "lesson",
+      "grade_level": 3,
+      "estimated_duration_s": 600,
+      "skill_ids": ["resolution_problemes"]
+    },
+    {
+      "resource_id": "EX019",
+      "title": "Heures et demi-heures",
+      "type": "exercise",
+      "grade_level": 1,
+      "estimated_duration_s": 180,
+      "skill_ids": ["lecture_heure"]
+    },
+    {
+      "resource_id": "EX020",
+      "title": "Conversions de longueurs",
+      "type": "exercise",
+      "grade_level": 4,
+      "estimated_duration_s": 240,
+      "skill_ids": ["conversions_unites", "unites_mesure_longueur"]
+    },
+    {
+      "resource_id": "EX021",
+      "title": "Calculs de durées",
+      "type": "exercise",
+      "grade_level": 4,
+      "estimated_duration_s": 240,
+      "skill_ids": ["lecture_heure"]
+    },
+    {
+      "resource_id": "QZ006",
+      "title": "Quiz - unités et durées",
+      "type": "quiz",
+      "grade_level": 3,
+      "estimated_duration_s": 300,
+      "skill_ids": ["lecture_heure", "unites_mesure_longueur", "conversions_unites"]
     }
   ]
 }
