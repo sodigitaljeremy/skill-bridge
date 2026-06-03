@@ -42,6 +42,79 @@ st.set_page_config(
 )
 
 
+# --- Présentation : libellés et couleurs centralisés ---
+
+# Mapping snake_case (côté domain/data) → libellé humain (côté UI).
+# La présentation est la responsabilité du front : ne pas demander à l'API de servir
+# les libellés humains, et ne PAS parser ``cluster_label`` côté API (qui contient les
+# snake_case). Les labels de clusters sont **regénérés** côté front à partir des
+# centroïdes (cf. ``_cluster_label_from_centroid``).
+DOMAIN_LABELS: dict[str, str] = {
+    "calcul_de_base": "Calcul de base",
+    "calcul_avance": "Calcul avancé",
+    "fractions_decimaux": "Fractions & décimaux",
+    "geometrie_mesures": "Géométrie & mesures",
+    "unites_temps": "Unités & temps",
+    "resolution_problemes": "Résolution de problèmes",
+}
+
+# Palette qualitative cohérente : C0 = même teinte sur scatter, heatmap (axe Y), cards.
+# Source : Set2 de ColorBrewer (pastel, sobre, lisible en RGB et imprimé).
+CLUSTER_COLORS: tuple[str, ...] = (
+    "#66c2a5",  # C0 — vert d'eau
+    "#fc8d62",  # C1 — orange
+    "#8da0cb",  # C2 — lavande
+    "#e78ac3",  # C3 — rose
+    "#a6d854",  # C4 — vert lime
+    "#ffd92f",  # C5 — jaune
+    "#e5c494",  # C6 — beige
+    "#b3b3b3",  # C7 — gris
+)
+
+# Seuils de "fort" / "faible" pour la regénération des libellés de cluster côté front.
+# Alignés sur src/skill_bridge/application/clustering.py.
+STRONG_THRESHOLD: float = 0.70
+WEAK_THRESHOLD: float = 0.55
+
+
+def _domain_label(snake: str) -> str:
+    """Libellé humain d'un domaine (fallback : snake_case en clair)."""
+    return DOMAIN_LABELS.get(snake, snake.replace("_", " ").capitalize())
+
+
+def _cluster_color(cluster_id: int) -> str:
+    return CLUSTER_COLORS[cluster_id % len(CLUSTER_COLORS)]
+
+
+def _cluster_label_from_centroid(centroid: dict[str, float]) -> str:
+    """Regénère un libellé lisible à partir du centroïde (côté front, pas via l'API).
+
+    Même logique que ``ClusteringService._label_from_centroid``, mais avec les libellés
+    humains du mapping ``DOMAIN_LABELS`` — pour éviter d'afficher du snake_case à
+    l'écran.
+    """
+    strong = sorted(
+        (d for d, s in centroid.items() if s >= STRONG_THRESHOLD),
+        key=lambda d: -centroid[d],
+    )
+    weak = sorted(
+        (d for d, s in centroid.items() if s <= WEAK_THRESHOLD),
+        key=lambda d: centroid[d],
+    )
+    if not strong and not weak:
+        return "Profil équilibré moyen"
+    if not weak and len(strong) >= 4:
+        return "Profil équilibré, fort partout"
+    if not strong and len(weak) >= 4:
+        return "En difficulté générale"
+    parts: list[str] = []
+    if strong:
+        parts.append("fort en " + ", ".join(_domain_label(d) for d in strong[:2]))
+    if weak:
+        parts.append("faible en " + ", ".join(_domain_label(d) for d in weak[:2]))
+    return " · ".join(parts).capitalize()
+
+
 # --- Clients & caches ---
 
 
@@ -235,6 +308,7 @@ def render_learner() -> None:
 
     profile = fetch_profile(selected["learner_id"])
     assignment = fetch_assignment(selected["learner_id"])
+    clusters = fetch_clusters()
     recos = fetch_recommendations(selected["learner_id"], n=5)
 
     col_left, col_right = st.columns([2, 1])
@@ -246,16 +320,17 @@ def render_learner() -> None:
         scores = profile["mean_score_per_domain"]
         domains = sorted(scores.keys())
         values = [scores[d] for d in domains]
+        labels = [_domain_label(d) for d in domains]
         colors = [_score_color(v) for v in values]
         fig = go.Figure(
             go.Bar(
                 x=values,
-                y=domains,
+                y=labels,
                 orientation="h",
                 marker_color=colors,
                 text=[f"{v:.2f}" for v in values],
                 textposition="outside",
-                hovertemplate="%{y}: %{x:.2f}<extra></extra>",
+                hovertemplate="%{y} : %{x:.2f}<extra></extra>",
             )
         )
         fig.update_layout(
@@ -264,13 +339,26 @@ def render_learner() -> None:
             margin=dict(l=10, r=10, t=10, b=10),
             showlegend=False,
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
     with col_right:
         st.subheader("Cluster assigné")
-        st.metric(
-            label=f"Cluster C{assignment['cluster_id']}",
-            value=assignment["cluster_label"],
+        cluster_id = assignment["cluster_id"]
+        cluster = next(c for c in clusters["clusters"] if c["cluster_id"] == cluster_id)
+        readable = _cluster_label_from_centroid(cluster["centroid_per_domain"])
+        color = _cluster_color(cluster_id)
+        # Carte HTML markdown (et non st.metric) pour éviter la troncature CSS
+        # du libellé complet, et pour porter la couleur de cluster cohérente avec
+        # le scatter et la heatmap.
+        st.markdown(
+            f"""
+<div style="border-left: 6px solid {color}; background: #f8f9fa;
+            padding: 10px 14px; border-radius: 4px;">
+  <div style="font-size: 0.85em; color: #666;">Cluster C{cluster_id}</div>
+  <div style="font-weight: 500; font-size: 1.0em; margin-top: 2px;">{readable}</div>
+</div>
+            """,
+            unsafe_allow_html=True,
         )
         st.write("")
         st.caption(f"**Niveau scolaire** : grade {profile['grade_level']}")
@@ -332,15 +420,30 @@ def render_clustering() -> None:
     cluster_list = clusters["clusters"]
     cols = st.columns(len(cluster_list))
     for cluster, col in zip(cluster_list, cols, strict=False):
-        with col, st.container(border=True):
-            st.metric(label=f"Cluster C{cluster['cluster_id']}", value=cluster["size"])
-            st.caption(cluster["label"])
+        readable = _cluster_label_from_centroid(cluster["centroid_per_domain"])
+        color = _cluster_color(cluster["cluster_id"])
+        with col:
+            st.markdown(
+                f"""
+<div style="border-left: 6px solid {color}; background: #f8f9fa;
+            padding: 10px 14px; border-radius: 4px; height: 120px;">
+  <div style="font-size: 0.85em; color: #666;">
+    Cluster C{cluster["cluster_id"]} · {cluster["size"]} apprenants
+  </div>
+  <div style="font-weight: 500; font-size: 0.95em; margin-top: 4px;">{readable}</div>
+</div>
+                """,
+                unsafe_allow_html=True,
+            )
 
-    st.markdown("### Projection 2D des apprenants (PCA, déterministe, *random_state=42*)")
+    st.markdown("### Centroïdes par domaine")
     st.caption(
-        "Chaque point = un apprenant. Coordonnées obtenues par PCA sur les 12 features "
-        "de profil. Couleur = cluster assigné. Léa annotée explicitement."
+        "Chaque ligne est un profil pédagogique découvert. On y voit ses forces "
+        "(vert) et ses faiblesses (rouge) propres."
     )
+    _render_centroid_heatmap(clusters)
+
+    st.markdown("### Projection 2D des apprenants (PCA, *illustrative*)")
     _render_pca_scatter(learners, clusters)
 
     if ground_truth:
@@ -414,8 +517,44 @@ def _render_silhouette_chart(clusters: dict[str, Any]) -> None:
         arrowhead=2,
         yshift=20,
     )
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
     st.caption(f"k retenu : **k = {chosen_k}** (silhouette = {clusters['silhouette']:.3f})")
+
+
+def _render_centroid_heatmap(clusters: dict[str, Any]) -> None:
+    """Heatmap 4 clusters x 6 domaines, couleur = score du centroïde (rouge -> vert)."""
+    cluster_list = clusters["clusters"]
+    # Ordre des domaines stable (alphabétique des snake_case) et identique partout.
+    domains_snake = sorted(cluster_list[0]["centroid_per_domain"].keys())
+    domain_labels = [_domain_label(d) for d in domains_snake]
+    z_matrix = [[c["centroid_per_domain"][d] for d in domains_snake] for c in cluster_list]
+    y_labels = [
+        f"C{c['cluster_id']} — {_cluster_label_from_centroid(c['centroid_per_domain'])}"
+        for c in cluster_list
+    ]
+
+    fig = go.Figure(
+        go.Heatmap(
+            z=z_matrix,
+            x=domain_labels,
+            y=y_labels,
+            colorscale="RdYlGn",
+            zmin=0.30,
+            zmax=0.90,
+            text=[[f"{v:.2f}" for v in row] for row in z_matrix],
+            texttemplate="%{text}",
+            textfont=dict(size=12, color="#222"),
+            hovertemplate="%{y}<br>%{x} : %{z:.2f}<extra></extra>",
+            colorbar=dict(title="Score", thickness=12, len=0.85),
+        )
+    )
+    fig.update_layout(
+        height=320,
+        margin=dict(l=10, r=10, t=10, b=10),
+        xaxis=dict(side="top", tickangle=-15),
+        yaxis=dict(autorange="reversed"),
+    )
+    st.plotly_chart(fig, width="stretch")
 
 
 def _render_pca_scatter(learners: list[dict[str, Any]], clusters: dict[str, Any]) -> None:
@@ -434,11 +573,34 @@ def _render_pca_scatter(learners: list[dict[str, Any]], clusters: dict[str, Any]
     pca = PCA(n_components=2, random_state=42)
     coords = pca.fit_transform(features_arr)
 
-    cluster_label_by_id = {c["cluster_id"]: c["label"] for c in clusters["clusters"]}
+    pc1_var = float(pca.explained_variance_ratio_[0])
+    pc2_var = float(pca.explained_variance_ratio_[1])
+    total_var = pc1_var + pc2_var
+    st.caption(
+        f"La projection 2D n'explique que **{total_var:.0%}** de la variance des profils "
+        f"(PC1 {pc1_var:.0%} · PC2 {pc2_var:.0%}). La séparation réelle se joue sur les "
+        "**12 dimensions** — la heatmap des centroïdes (ci-dessus) et la table de "
+        "pureté (ci-dessous) sont plus informatives. Léa est annotée."
+    )
+
+    # Libellés lisibles regénérés depuis le centroïde — pas depuis ``label`` de l'API.
+    cluster_readable_by_id = {
+        c["cluster_id"]: _cluster_label_from_centroid(c["centroid_per_domain"])
+        for c in clusters["clusters"]
+    }
+    cluster_strings = [f"C{row[3]} — {cluster_readable_by_id[row[3]]}" for row in rows]
+    # category_orders + color_discrete_map garantissent l'ordre stable C0..Cn et
+    # la même couleur que les cards et la heatmap.
+    sorted_cluster_ids = sorted(cluster_readable_by_id)
+    category_order = [f"C{cid} — {cluster_readable_by_id[cid]}" for cid in sorted_cluster_ids]
+    color_map = {
+        f"C{cid} — {cluster_readable_by_id[cid]}": _cluster_color(cid) for cid in sorted_cluster_ids
+    }
+
     df: dict[str, list[Any]] = {
         "x": coords[:, 0].tolist(),
         "y": coords[:, 1].tolist(),
-        "Cluster": [f"C{row[3]} — {cluster_label_by_id[row[3]]}" for row in rows],
+        "Cluster": cluster_strings,
         "Apprenant": [row[1] for row in rows],
     }
     fig = px.scatter(
@@ -447,7 +609,8 @@ def _render_pca_scatter(learners: list[dict[str, Any]], clusters: dict[str, Any]
         y="y",
         color="Cluster",
         hover_name="Apprenant",
-        color_discrete_sequence=px.colors.qualitative.Set2,
+        color_discrete_map=color_map,
+        category_orders={"Cluster": category_order},
     )
     fig.update_traces(marker=dict(size=10, line=dict(width=1, color="white")))
 
@@ -465,13 +628,13 @@ def _render_pca_scatter(learners: list[dict[str, Any]], clusters: dict[str, Any]
         )
 
     fig.update_layout(
-        height=520,
-        xaxis_title=f"PC1 ({pca.explained_variance_ratio_[0]:.0%} variance expliquée)",
-        yaxis_title=f"PC2 ({pca.explained_variance_ratio_[1]:.0%} variance expliquée)",
+        height=500,
+        xaxis_title=f"PC1 ({pc1_var:.0%} variance expliquée)",
+        yaxis_title=f"PC2 ({pc2_var:.0%} variance expliquée)",
         legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="left", x=0),
         margin=dict(l=10, r=10, t=10, b=10),
     )
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
 
 def _render_purity_table(
@@ -487,14 +650,17 @@ def _render_purity_table(
         assignment = fetch_assignment(learner["learner_id"])
         archetype_to_cluster[gt["archetype"]][assignment["cluster_id"]] += 1
 
-    cluster_label_by_id = {c["cluster_id"]: c["label"] for c in clusters["clusters"]}
+    cluster_readable_by_id = {
+        c["cluster_id"]: _cluster_label_from_centroid(c["centroid_per_domain"])
+        for c in clusters["clusters"]
+    }
 
     rows = []
     for archetype, counts in sorted(archetype_to_cluster.items()):
         dominant_cluster, dominant_count = counts.most_common(1)[0]
         total = sum(counts.values())
         purity = dominant_count / total
-        cluster_text = f"C{dominant_cluster} — {cluster_label_by_id[dominant_cluster]}"
+        cluster_text = f"C{dominant_cluster} — {cluster_readable_by_id[dominant_cluster]}"
         rows.append(
             {
                 "Archétype (vérité-terrain)": archetype,
@@ -503,7 +669,7 @@ def _render_purity_table(
                 "Détail": ", ".join(f"C{cid}={n}" for cid, n in counts.most_common()),
             }
         )
-    st.dataframe(rows, use_container_width=True, hide_index=True)
+    st.dataframe(rows, width="stretch", hide_index=True)
 
 
 # --- Main ---
