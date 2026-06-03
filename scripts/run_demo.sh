@@ -37,8 +37,10 @@ fi
 
 echo ""
 echo "→ Démarrage Streamlit sur http://localhost:8501"
+# --server.headless=true : pas de prompt interactif (email) au 1er lancement, pas
+# d'ouverture auto du navigateur. L'app reste accessible sur localhost:8501.
 uv run streamlit run src/skill_bridge/adapters/inbound/streamlit_app.py \
-  --server.headless=false --server.port=8501 --browser.gatherUsageStats=false &
+  --server.headless=true --server.port=8501 --browser.gatherUsageStats=false &
 FRONT_PID=$!
 
 wait $FRONT_PID

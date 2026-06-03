@@ -25,7 +25,8 @@ api:  ## Lance l'API FastAPI sur http://localhost:8000 (Swagger: /docs)
 	uv run uvicorn skill_bridge.adapters.inbound.api.app:create_app --factory --reload --port 8000
 
 front:  ## Lance la vitrine Streamlit sur http://localhost:8501 (l'API doit déjà tourner)
-	uv run streamlit run src/skill_bridge/adapters/inbound/streamlit_app.py --server.port=8501
+	uv run streamlit run src/skill_bridge/adapters/inbound/streamlit_app.py \
+	  --server.headless=true --server.port=8501 --browser.gatherUsageStats=false
 
 demo:  ## Lance API + Streamlit ensemble (Ctrl-C pour tout arrêter)
 	bash scripts/run_demo.sh
