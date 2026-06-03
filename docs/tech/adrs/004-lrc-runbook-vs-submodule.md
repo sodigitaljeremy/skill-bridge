@@ -12,13 +12,19 @@ format brut (CSV "Mathia") en statements xAPI conformes aux profils DASES.
 
 Trois options pour l'intégrer :
 
-1. **Submodule git** : `git submodule add` dans `external/lrc`. Reproductibilité forte
-   (SHA capturé dans `.gitmodules`), mais : pollution licence (LRC = GPL-3.0,
-   SkillBridge = MIT) et couplage de cycle de vie.
+1. **Submodule git** : `git submodule add` dans `external/lrc`. Un submodule est un repo
+   *séparé* avec sa propre licence (le `.gitmodules` ne contient qu'un pointeur SHA), il
+   **n'incorpore pas** le code GPL-3.0 dans notre repo MIT. La licence n'est donc **pas**
+   le bon argument contre le submodule. La vraie objection est **architecturale** : le
+   LRC est un service qu'on consomme **via HTTP**, pas du code qu'on importe ou lie
+   statiquement (comme une base de données). Un submodule introduirait un **couplage de
+   cycle de vie inutile** (clone récursif, mise à jour synchronisée du SHA, surface de
+   build et CI plus large) pour quelque chose qu'on n'embarque pas comme code.
 2. **Service externe HTTP** : LRC tourne dans son propre Docker Compose, SkillBridge le
    consomme via un client HTTP. SHA pinné dans un runbook documenté.
-3. **Vendoring** : copier le code LRC dans notre repo. **Refusé d'emblée** — pollue
-   massivement la licence et complique la maintenance.
+3. **Vendoring** : copier le code LRC dans notre repo. **Refusé d'emblée** — cette fois
+   le code GPL-3.0 entrerait bien dans le repo MIT (compatibilité de licence à
+   instruire) et la maintenance double.
 
 État amont du LRC : pas de release publiée, dernier commit observé `163db132` du
 **2025-08-14** (~10 mois d'inactivité à la date du spike).
@@ -37,8 +43,9 @@ déterministe `StubLrcConverter` pour les tests unitaires.
 
 ### Positives
 
-- **Pas de pollution licence** : le repo reste MIT propre. La doc rappelle
-  explicitement que le LRC consommé est GPL-3.0.
+- **Pas de couplage de cycle de vie** : le LRC reste un service tiers délimité
+  (GPL-3.0, consommé en HTTP). Il évolue indépendamment, on n'a pas à le re-builder
+  avec nous, et notre CI ne dépend pas de son code.
 - **Architecture claire** : "service-to-service" est l'archi cible (Coolify + Traefik),
   on la pratique dès le local.
 - **Tests rapides** : les tests unitaires utilisent `StubLrcConverter` (pas de réseau,

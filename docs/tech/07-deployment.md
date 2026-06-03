@@ -31,26 +31,26 @@ Aucune des deux options ne sera tentée prématurément.
 
 ```mermaid
 flowchart TB
-    DNS[skillbridge.example.com]:::ext
+    DNS["skillbridge.example.com"]:::ext
 
-    subgraph hetzner[VPS Hetzner]
-        Traefik[Traefik<br/>Coolify-managed]:::infra
-        subgraph network[Network: skillbridge]
-            APIc[Container<br/>skillbridge-api]:::svc
-            STc[Container<br/>skillbridge-front]:::svc
-            DOCc[Container<br/>skillbridge-doc<br/>(option B)]:::svc
+    subgraph hetzner["VPS Hetzner"]
+        Traefik["Traefik<br/>Coolify-managed"]:::infra
+        subgraph network["Network skillbridge"]
+            APIc["Container<br/>skillbridge-api"]:::svc
+            STc["Container<br/>skillbridge-front"]:::svc
+            DOCc["Container<br/>skillbridge-doc<br/>(option B)"]:::svc
         end
-        Vol[(Volume<br/>data/generated/<br/>+ cache ST)]:::store
+        Vol[("Volume<br/>data/generated/<br/>+ cache ST")]:::store
     end
 
-    LRCc[Container LRC<br/>séparé ou même VPS]:::ext
+    LRCc["Container LRC<br/>séparé ou même VPS"]:::ext
 
     DNS --> Traefik
-    Traefik -->|Host=api.…| APIc
-    Traefik -->|Host=app.…| STc
-    Traefik -->|Host=doc.…| DOCc
+    Traefik -->|"Host=api.…"| APIc
+    Traefik -->|"Host=app.…"| STc
+    Traefik -->|"Host=doc.…"| DOCc
     APIc --> Vol
-    APIc -.->|seulement au boot| LRCc
+    APIc -.->|"seulement au boot"| LRCc
 
     classDef ext fill:#fff3e0,stroke:#e65100
     classDef svc fill:#e0f2f1,stroke:#00897b

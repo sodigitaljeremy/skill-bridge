@@ -38,7 +38,7 @@ sequenceDiagram
     autonumber
     participant CLI as generate_dataset.py
     participant Enc as CsvTraceEncoder
-    participant LRC as LRC (HTTP)
+    participant LRC as "LRC (HTTP)"
     participant FS as data/generated/
 
     CLI->>CLI: pick (Léa + 1/archetype) — 4 apprenants, 199 traces
@@ -61,7 +61,7 @@ requête :
 sequenceDiagram
     autonumber
     participant U as uvicorn
-    participant APP as create_app()
+    participant APP as "create_app()"
     participant LIFE as lifespan
     participant FS as data/generated/
     participant Prof as LearnerProfileBuilder

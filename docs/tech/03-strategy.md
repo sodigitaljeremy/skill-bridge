@@ -26,15 +26,15 @@ déploiement Coolify celui du Lot 5d.
 
 ```mermaid
 flowchart LR
-    L0[Lot 0<br/>Spike de faisabilité]:::done
-    L1[Lot 1<br/>Dataset + archétypes]:::done
-    L2[Lot 2<br/>IA — profiling, clustering, reco]:::done
-    L3[Lot 3<br/>Interop LRC]:::done
-    L5a[Lot 5a<br/>API FastAPI]:::done
-    L5b[Lot 5b<br/>Vitrine Streamlit]:::done
-    L5c[Lot 5c<br/>Doc MkDocs]:::done
-    L4[Lot 4<br/>PDC réel]:::todo
-    L5d[Lot 5d<br/>Déploiement]:::todo
+    L0["Lot 0<br/>Spike de faisabilité"]:::done
+    L1["Lot 1<br/>Dataset + archétypes"]:::done
+    L2["Lot 2<br/>IA — profiling, clustering, reco"]:::done
+    L3["Lot 3<br/>Interop LRC"]:::done
+    L5a["Lot 5a<br/>API FastAPI"]:::done
+    L5b["Lot 5b<br/>Vitrine Streamlit"]:::done
+    L5c["Lot 5c<br/>Doc MkDocs"]:::done
+    L4["Lot 4<br/>PDC réel"]:::todo
+    L5d["Lot 5d<br/>Déploiement"]:::todo
 
     L0 --> L1 --> L2 --> L3 --> L5a --> L5b --> L5c
     L5c --> L4 --> L5d

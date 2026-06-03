@@ -22,24 +22,54 @@ Inspection des templates disponibles au SHA pinné :
 - **lms** (≥ 5 templates) : `accessed-page`, `accessed-file`, `registered-course`, etc.
   Verbes : `accessed`, `registered`, `uploaded`, `downloaded`...
 
-Nos statements utilisent les verbes ADL standard `passed`, `failed`, `completed`, sur
-des objets type `performance` (exercice), `lesson` (leçon) ou `assessment` (quiz). Le
-mapping YAML pose `object.definition.type = "http://adlnet.gov/expapi/activities/interaction"`.
+Notre dataset comporte trois familles de ressources : **exercices**, **quiz** et
+**leçons**. Il faut les traiter séparément :
 
-**Aucune combinaison** de nos verbes + types ne matche un template DASES sans
-déformation sémantique :
+- **Quiz et exercices notés sont sémantiquement des assessments** (objet évalué, score,
+  verdict). Ils **sont mappables** sur `assessment.completed` : il suffit de poser
+  `object.definition.type = "http://adlnet.gov/expapi/activities/assessment"` et
+  d'émettre `verb = completed` avec `result.success` (booléen) + `result.score`. C'est
+  la voie sémantiquement propre prévue par DASES.
+- **Les leçons** ne sont **pas** des assessments. Aucun template DASES ne les couvre
+  proprement à ce SHA.
 
-- `passed` / `failed` n'existent pas dans `lms` ni `assessment`.
-- `completed` matcherait `assessment.completed`, mais cela demanderait de re-typer nos
-  **leçons** comme `assessment` — ce serait factuellement faux.
+Pour les quiz/exercices, deux raisons distinctes ferment la voie `assessment.completed`
+dans notre démo — ce sont des **choix et un obstacle**, pas une impossibilité
+sémantique :
 
-Tentation : injecter un `profile:` dans le mapping pour forcer le match.
+1. **Choix de modélisation** : on émet directement les verbes ADL `passed` / `failed`
+   plutôt que `completed`. Pour un verdict d'exercice, c'est **plus expressif** (le
+   verbe porte le résultat ; pas besoin de lire `result.success`) et c'est la pratique
+   xAPI courante. Conséquence : aucun template `assessment` ne matche, puisque ses
+   verbes sont `start` / `terminated` / `completed` / `answered`.
+2. **Obstacle technique** : la voie `assessment.completed` propre exige `result.success:
+   true/false`. Or le LRC à ce SHA mal-interprète `value: true/false` dans un `switch`
+   du mapping (cf. [ADR 006](006-csv-custom-vs-mappers-natifs.md)) — on a dû retirer la
+   règle `result.success` du mapping pour que la conversion passe. Tant que ce bug
+   n'est pas corrigé, la voie propre **n'est pas opérationnellement disponible** côté
+   `/convert_custom`.
+
+Pour les leçons, le constat reste : pas de template DASES dédié à ce SHA.
+
+Tentation : injecter un `profile:` dans le mapping pour forcer le match sur les
+quiz/exercices, malgré le mismatch verbe. **Rejetée** : ce serait étiqueter un statement
+comme conforme à un template qu'il ne respecte pas — le consommateur en aval (autre
+provider, LRS) serait trompé.
 
 ## Decision
 
 **On n'injecte pas de `profile:` dans le mapping YAML.** `meta.profile` reste `null`
-dans la sortie LRC. Cet état est documenté dans la vitrine ("limite assumée"), dans le
-runbook LRC (`docs/lrc_runbook.md`), et ici.
+dans la sortie LRC pour toutes nos traces.
+
+Ce `null` **n'est pas une impossibilité sémantique** : pour les quiz/exercices, la voie
+`assessment.completed` est techniquement légitime — elle est juste fermée par notre
+choix de modélisation `passed`/`failed` (plus expressif) **et** par le bug LRC sur
+`result.success` ([ADR 006](006-csv-custom-vs-mappers-natifs.md)). Pour les leçons,
+DASES n'a effectivement pas de template adapté — c'est une remontée utile pour
+l'écosystème Prometheus-X.
+
+Cet état est documenté dans la vitrine ("limite assumée"), dans le runbook LRC
+(`docs/lrc_runbook.md`), et ici.
 
 ## Consequences
 
@@ -65,9 +95,14 @@ runbook LRC (`docs/lrc_runbook.md`), et ici.
 
 ### Limites assumées
 
-- **À revisiter si DASES évolue**. Si un futur profil `assessment` ajoute un template
-  `exercise-passed` / `exercise-failed`, on pourra mapper nos statements dessus. La
-  structure de notre mapping YAML facilitera cet ajout (1 ligne `profile:` à
-  positionner conditionnellement).
+- **À revisiter sur deux fronts indépendants** :
+    - Si on **re-modélise les quiz/exercices en `assessment.completed`** (`object.type
+      = assessment`, `verb = completed`, `result.success` + `result.score`) **ET** que
+      le bug LRC sur `result.success` est corrigé en amont, on pourra alors injecter
+      `profile: assessment.completed` dans le mapping YAML, et `meta.profile` ne sera
+      plus `null` pour cette famille.
+    - Si DASES propose un jour un template dédié au verdict `exercise-passed` /
+      `exercise-failed` (qui correspondrait mieux à notre choix de modélisation
+      actuel), on pourra mapper directement sans renoncer à `passed`/`failed`.
 - **Pas testé avec le profil `forum`** : le scénario maths primaire ne génère pas
   d'événements sociaux.

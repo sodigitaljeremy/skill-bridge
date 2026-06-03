@@ -12,12 +12,12 @@
 
 ```mermaid
 flowchart LR
-    A[App éducative<br/>(persona Léa)]:::ext
-    L[LRC<br/>Prometheus-X]:::ext
-    P[PLRS<br/>coffre apprenant]:::sim
-    D[PDC<br/>échange consenti]:::sim
-    S[SkillBridge<br/>provider]:::own
-    R[Recommandations<br/>explicables]:::own
+    A["App éducative<br/>(persona Léa)"]:::ext
+    L["LRC<br/>Prometheus-X"]:::ext
+    P["PLRS<br/>coffre apprenant"]:::sim
+    D["PDC<br/>échange consenti"]:::sim
+    S["SkillBridge<br/>provider"]:::own
+    R["Recommandations<br/>explicables"]:::own
 
     A -->|événements bruts| L
     L -->|xAPI DASES| P

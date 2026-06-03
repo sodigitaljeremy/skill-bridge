@@ -30,8 +30,8 @@ Le scénario fil rouge couvre :
 sequenceDiagram
     participant App as Mathia
     participant LRC
-    participant PLRS as PLRS (simulé)
-    participant PDC as PDC (Lot 4)
+    participant PLRS as "PLRS (simulé)"
+    participant PDC as "PDC (Lot 4)"
     participant SB as SkillBridge
 
     App->>App: Léa réalise des exercices

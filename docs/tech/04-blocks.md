@@ -4,20 +4,20 @@
 
 ```mermaid
 flowchart TB
-    subgraph users[Utilisateurs]
-        L[Léa et apprenants]
-        E[Évaluateur / recruteur]
+    subgraph users["Utilisateurs"]
+        L["Léa et apprenants"]
+        E["Évaluateur / recruteur"]
     end
 
-    SB[SkillBridge<br/>Data & AI provider]:::system
+    SB["SkillBridge<br/>Data & AI provider"]:::system
 
-    subgraph dataspace[Écosystème Prometheus-X / DASES]
-        LRC[learning-records-converter<br/>service de normalisation xAPI]:::ext
-        PDC[dataspace-connector<br/>échange consenti]:::ext
-        ESCO[ESCO<br/>référentiel européen]:::ext
+    subgraph dataspace["Écosystème Prometheus-X / DASES"]
+        LRC["learning-records-converter<br/>service de normalisation xAPI"]:::ext
+        PDC["dataspace-connector<br/>échange consenti"]:::ext
+        ESCO["ESCO<br/>référentiel européen"]:::ext
     end
 
-    App[Application Mathia<br/>simulée]:::ext
+    App["Application Mathia<br/>simulée"]:::ext
 
     L -->|utilise| App
     App -->|événements CSV| LRC
@@ -34,17 +34,17 @@ flowchart TB
 
 ```mermaid
 flowchart TB
-    user[Utilisateur<br/>navigateur]
+    user["Utilisateur<br/>navigateur"]
 
-    subgraph skillbridge[SkillBridge — déployé sur VPS Hetzner / Coolify]
-        ST[Vitrine Streamlit<br/>port 8501]:::container
-        API[API FastAPI<br/>port 8000, lifespan préchargé]:::container
-        FILES[(Artefacts JSONL<br/>data/generated/)]:::store
-        SEEDS[(Seeds versionnés<br/>data/skills, data/seed)]:::store
+    subgraph skillbridge["SkillBridge — déployé sur VPS Hetzner / Coolify"]
+        ST["Vitrine Streamlit<br/>port 8501"]:::container
+        API["API FastAPI<br/>port 8000, lifespan préchargé"]:::container
+        FILES[("Artefacts JSONL<br/>data/generated/")]:::store
+        SEEDS[("Seeds versionnés<br/>data/skills, data/seed")]:::store
     end
 
-    LRC[LRC<br/>service externe HTTP]:::ext
-    HF[Hugging Face<br/>modèle ST téléchargé au 1er boot]:::ext
+    LRC["LRC<br/>service externe HTTP"]:::ext
+    HF["Hugging Face<br/>modèle ST téléchargé au 1er boot"]:::ext
 
     user -->|HTTP| ST
     ST -->|HTTP REST| API
@@ -78,23 +78,23 @@ flowchart TB
 
 ```mermaid
 flowchart LR
-    subgraph inbound[adapters/inbound/api]
-        ROUTES[Routes FastAPI<br/>health, learners, profile,<br/>clusters, recommend]
-        STATE[PreloadedState<br/>dataclass frozen]
+    subgraph inbound["adapters/inbound/api"]
+        ROUTES["Routes FastAPI<br/>health, learners, profile,<br/>clusters, recommend"]
+        STATE["PreloadedState<br/>dataclass frozen"]
     end
 
-    subgraph application[application/]
-        PROFILE[LearnerProfileBuilder]
-        CLUSTER[ClusteringService]
-        RECO[RecommendationService]
+    subgraph application["application/"]
+        PROFILE["LearnerProfileBuilder"]
+        CLUSTER["ClusteringService"]
+        RECO["RecommendationService"]
     end
 
-    subgraph outbound[adapters/outbound/]
-        FILES[FileSkillRepository<br/>FileResourceRepository<br/>FileLearnersLoader<br/>FileEnrichedTraceLoader]
-        EMB[SentenceTransformersEmbeddingProvider]
+    subgraph outbound["adapters/outbound/"]
+        FILES["FileSkillRepository<br/>FileResourceRepository<br/>FileLearnersLoader<br/>FileEnrichedTraceLoader"]
+        EMB["SentenceTransformersEmbeddingProvider"]
     end
 
-    LIFESPAN[lifespan]:::lifecycle
+    LIFESPAN["lifespan"]:::lifecycle
     LIFESPAN --> FILES
     LIFESPAN --> PROFILE
     LIFESPAN --> CLUSTER
