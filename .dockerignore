@@ -1,0 +1,44 @@
+# Ignoré au build Docker (réduit la taille du contexte et accélère le build)
+
+# Repo / VCS
+.git/
+.github/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Tests (non requis pour les images de service)
+tests/
+
+# Build de site/ : régénéré dans Dockerfile.docs
+site/
+
+# Note : docs/ est conservé dans le contexte car Dockerfile.docs en a besoin.
+# Le surcoût pour Dockerfile.api / Dockerfile.front est négligeable (~200 KB de
+# Markdown), et leurs Dockerfiles ne COPY pas docs/ donc le contenu n'entre pas
+# dans leurs images finales.
+
+# Generated (régénéré au build, ou ignoré côté front)
+data/generated/
+
+# Local / IDE
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Claude Code
+.claude/
+
+# Logs
+*.log
+logs/
+
+# Env
+.env
+.env.*

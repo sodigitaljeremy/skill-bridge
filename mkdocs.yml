@@ -78,6 +78,7 @@ nav:
           - Régénérer le dataset: user/how-to/regenerate-dataset.md
           - Ingérer via le LRC: user/how-to/ingest-via-lrc.md
           - Appeler l'API: user/how-to/call-api.md
+          - Déployer sur Coolify: user/how-to/deploy-coolify.md
       - Reference:
           - API HTTP: user/reference/api.md
           - Format des données: user/reference/data-format.md

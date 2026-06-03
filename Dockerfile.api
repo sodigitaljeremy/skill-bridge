@@ -1,0 +1,115 @@
+# Dockerfile.api — API FastAPI SkillBridge
+#
+# Stratégie : tout est précalculé au BUILD (deps, modèle sentence-transformers, dataset
+# via `make dataset`). Au runtime, le boot du conteneur est ~5 s ; les requêtes sont
+# des lookups en mémoire.
+#
+# Choix torch CPU : on n'utilise PAS ``uv sync --frozen`` ici car ``uv.lock`` traîne ~10
+# packages NVIDIA (cublas, cudnn, cufft…) qui pèsent 2-3 GB et sont inutiles sur CPU.
+# On installe torch depuis l'index PyTorch CPU officiel, puis le reste depuis PyPI ; le
+# résultat est ~10x plus petit (image ~2 GB au lieu de ~8 GB) et beaucoup plus rapide à
+# builder.
+#
+# Image résultante : ~2 GB. Cold start runtime : ~5 s.
+#
+# Build :     docker build -f Dockerfile.api -t skillbridge-api .
+# Run local : docker run --rm -p 8000:8000 skillbridge-api
+
+ARG PYTHON_VERSION=3.12-slim-bookworm
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Stage 1 — Builder : installe les deps Python (torch CPU + reste)
+# ─────────────────────────────────────────────────────────────────────────────
+FROM python:${PYTHON_VERSION} AS builder
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+WORKDIR /app
+RUN python -m venv /app/.venv
+ENV PATH=/app/.venv/bin:$PATH
+
+# 1) torch CPU depuis l'index PyTorch CPU officiel (pas de stubs NVIDIA)
+RUN pip install --index-url https://download.pytorch.org/whl/cpu \
+        "torch>=2.4,<3"
+
+# 2) Reste des deps runtime depuis PyPI. sentence-transformers verra torch déjà
+#    installé et ne le réinstallera pas.
+RUN pip install \
+        "fastapi>=0.111" \
+        "uvicorn[standard]>=0.30" \
+        "pydantic>=2.13" \
+        "numpy>=2" \
+        "scikit-learn>=1.5" \
+        "sentence-transformers>=3" \
+        "httpx>=0.27" \
+        "faker>=40"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Stage 2 — Bundle ST : télécharge le modèle MiniLM multilingue dans le cache HF
+# ─────────────────────────────────────────────────────────────────────────────
+FROM builder AS st-bundle
+ENV HF_HOME=/opt/hf-cache \
+    SENTENCE_TRANSFORMERS_HOME=/opt/hf-cache
+
+RUN python -c "from sentence_transformers import SentenceTransformer; \
+    SentenceTransformer('sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2')"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Stage 3 — Dataset baked : génère data/generated/ au build (reproductible seed=42)
+# ─────────────────────────────────────────────────────────────────────────────
+FROM st-bundle AS dataset-bake
+
+COPY src/ ./src/
+COPY data/skills/ ./data/skills/
+COPY data/seed/ ./data/seed/
+COPY scripts/ ./scripts/
+COPY pyproject.toml README.md ./
+
+# Installe le package en éditable (les imports skill_bridge fonctionnent côté script)
+RUN pip install --no-deps -e .
+
+# Pas de --via-lrc : aucun appel réseau pour le dataset principal. Seed=42 →
+# mêmes 100 apprenants, mêmes 5800 traces, mêmes clusters partout (CLI + API).
+RUN python scripts/generate_dataset.py --seed 42
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Stage 4 — Runtime : image finale minimale
+# ─────────────────────────────────────────────────────────────────────────────
+FROM python:${PYTHON_VERSION} AS runtime
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    HF_HOME=/opt/hf-cache \
+    SENTENCE_TRANSFORMERS_HOME=/opt/hf-cache \
+    PATH=/app/.venv/bin:$PATH
+
+# curl pour healthcheck
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Utilisateur non-root
+RUN useradd -m -u 1000 skillbridge
+
+WORKDIR /app
+
+# Copies depuis les stages précédents
+COPY --from=dataset-bake --chown=skillbridge:skillbridge /app/.venv ./.venv
+COPY --from=dataset-bake --chown=skillbridge:skillbridge /app/src ./src
+COPY --from=dataset-bake --chown=skillbridge:skillbridge /app/data ./data
+COPY --from=st-bundle    --chown=skillbridge:skillbridge /opt/hf-cache /opt/hf-cache
+
+USER skillbridge
+
+EXPOSE 8000
+
+# start_period généreux : le lifespan charge ST (~5 s) puis précalcule top-10 recos
+# pour les 100 apprenants (≈ 50 s sur CPU containérisé, soit ~500 ms/embedding × 100).
+# Mesuré à ~60 s en local sur Hetzner-class CPU ; on prend une marge à 90 s.
+HEALTHCHECK --interval=10s --timeout=5s --start-period=90s --retries=3 \
+    CMD curl -sf http://127.0.0.1:8000/health || exit 1
+
+CMD ["uvicorn", "skill_bridge.adapters.inbound.api.app:create_app", \
+     "--factory", "--host", "0.0.0.0", "--port", "8000"]

@@ -1,0 +1,99 @@
+# docker-compose.prod.yml — SkillBridge en production (Coolify / Hetzner)
+#
+# 3 services : api, front, docs. Tout self-hosted (pas de GitHub Pages, pas de LRC).
+#
+# Routage : Coolify positionne Traefik en frontal + TLS Let's Encrypt automatique.
+# Les labels Traefik ci-dessous sont à adapter dans l'UI Coolify si tu utilises
+# l'interface ; ils sont laissés ici comme référence pour un déploiement standalone.
+#
+# Domaines cibles :
+#   - app.skillbridge-data.fr  → front Streamlit
+#   - api.skillbridge-data.fr  → API FastAPI
+#   - docs.skillbridge-data.fr → doc MkDocs (nginx static)
+#
+# Voir : docs/user/how-to/deploy-coolify.md
+
+services:
+  api:
+    image: skillbridge-api:${IMAGE_TAG:-latest}
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: skillbridge-api
+    restart: unless-stopped
+    networks:
+      - skillbridge
+    expose:
+      - "8000"
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://127.0.0.1:8000/health"]
+      interval: 10s
+      timeout: 5s
+      # ~60 s mesuré en local (ST load + précompute des 100 recos). On prend marge à 90 s.
+      start_period: 90s
+      retries: 3
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.sb-api.rule=Host(`${API_HOST:-api.skillbridge-data.fr}`)"
+      - "traefik.http.routers.sb-api.entrypoints=websecure"
+      - "traefik.http.routers.sb-api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.sb-api.loadbalancer.server.port=8000"
+
+  front:
+    image: skillbridge-front:${IMAGE_TAG:-latest}
+    build:
+      context: .
+      dockerfile: Dockerfile.front
+    container_name: skillbridge-front
+    restart: unless-stopped
+    networks:
+      - skillbridge
+    expose:
+      - "8501"
+    environment:
+      # Routage interne par DNS Docker : la vitrine appelle l'API via le hostname
+      # de service. Pas besoin de domaine public pour ce trafic.
+      SKILLBRIDGE_API_URL: http://api:8000
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://127.0.0.1:8501/_stcore/health"]
+      interval: 10s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.sb-front.rule=Host(`${FRONT_HOST:-app.skillbridge-data.fr}`)"
+      - "traefik.http.routers.sb-front.entrypoints=websecure"
+      - "traefik.http.routers.sb-front.tls.certresolver=letsencrypt"
+      - "traefik.http.services.sb-front.loadbalancer.server.port=8501"
+
+  docs:
+    image: skillbridge-docs:${IMAGE_TAG:-latest}
+    build:
+      context: .
+      dockerfile: Dockerfile.docs
+    container_name: skillbridge-docs
+    restart: unless-stopped
+    networks:
+      - skillbridge
+    expose:
+      - "80"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://127.0.0.1/healthz"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.sb-docs.rule=Host(`${DOCS_HOST:-docs.skillbridge-data.fr}`)"
+      - "traefik.http.routers.sb-docs.entrypoints=websecure"
+      - "traefik.http.routers.sb-docs.tls.certresolver=letsencrypt"
+      - "traefik.http.services.sb-docs.loadbalancer.server.port=80"
+
+networks:
+  skillbridge:
+    name: skillbridge
+    driver: bridge

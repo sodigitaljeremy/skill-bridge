@@ -1,0 +1,75 @@
+# Dockerfile.front — Vitrine Streamlit SkillBridge
+#
+# Image légère : Streamlit + plotly + httpx + numpy + scikit-learn (PCA).
+# PAS de torch, PAS de sentence-transformers — la vitrine consomme l'API uniquement.
+#
+# Build :     docker build -f Dockerfile.front -t skillbridge-front .
+# Run local : docker run --rm -p 8501:8501 \
+#               -e SKILLBRIDGE_API_URL=http://host.docker.internal:8000 \
+#               skillbridge-front
+
+ARG PYTHON_VERSION=3.12-slim-bookworm
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Stage 1 — Builder : installe uniquement les deps front (override uv sync)
+# ─────────────────────────────────────────────────────────────────────────────
+FROM python:${PYTHON_VERSION} AS builder
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+# pyproject.toml liste toutes les deps (incluant torch via sentence-transformers).
+# Pour le front, on installe explicitement le sous-ensemble minimal.
+RUN pip install --no-cache-dir \
+        "streamlit>=1.58.0" \
+        "plotly>=5.0" \
+        "httpx>=0.27" \
+        "numpy>=2" \
+        "scikit-learn>=1.5"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Stage 2 — Runtime
+# ─────────────────────────────────────────────────────────────────────────────
+FROM python:${PYTHON_VERSION} AS runtime
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
+
+# curl pour healthcheck
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN useradd -m -u 1000 skillbridge
+
+# Recopie l'environnement Python depuis le builder
+COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+
+WORKDIR /app
+
+# Code source : uniquement le module Streamlit. L'app résoud REPO_ROOT via parents[4]
+# (cf. commentaire dans le module), donc on respecte la même arborescence sous /app.
+COPY --chown=skillbridge:skillbridge src/skill_bridge/adapters/inbound/streamlit_app.py \
+     ./src/skill_bridge/adapters/inbound/streamlit_app.py
+
+# Fixtures committées : seules sources de données en prod (LRC non déployé, dataset
+# non régénéré côté front). Le mode local dev privilégie data/generated/ qui n'est PAS
+# bundlé ici.
+COPY --chown=skillbridge:skillbridge data/seed/interop_example/ ./data/seed/interop_example/
+COPY --chown=skillbridge:skillbridge data/seed/learners_fixture.jsonl ./data/seed/learners_fixture.jsonl
+
+USER skillbridge
+
+EXPOSE 8501
+
+HEALTHCHECK --interval=10s --timeout=5s --start-period=15s --retries=3 \
+    CMD curl -sf http://127.0.0.1:8501/_stcore/health || exit 1
+
+CMD ["streamlit", "run", "src/skill_bridge/adapters/inbound/streamlit_app.py", \
+     "--server.headless=true", \
+     "--server.address=0.0.0.0", \
+     "--server.port=8501", \
+     "--browser.gatherUsageStats=false"]
