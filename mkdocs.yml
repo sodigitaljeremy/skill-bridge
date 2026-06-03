@@ -1,0 +1,89 @@
+site_name: SkillBridge
+site_description: Data & AI provider pour le dataspace éducation & compétences (Prometheus-X / DASES)
+site_url: https://sodigitaljeremy.github.io/skill-bridge/
+repo_url: https://github.com/sodigitaljeremy/skill-bridge
+repo_name: sodigitaljeremy/skill-bridge
+edit_uri: ""
+
+theme:
+  name: material
+  language: fr
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/brightness-7
+        name: Mode sombre
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/brightness-4
+        name: Mode clair
+  features:
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - navigation.tracking
+    - toc.follow
+    - content.code.copy
+    - search.suggest
+    - search.highlight
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
+plugins:
+  - search:
+      lang: fr
+
+nav:
+  - Accueil: index.md
+  - Doc technique (arc42):
+      - Introduction: tech/01-introduction.md
+      - Contexte: tech/02-context.md
+      - Stratégie de solution: tech/03-strategy.md
+      - Vue des blocs (C4): tech/04-blocks.md
+      - Vue runtime: tech/05-runtime.md
+      - Vue de déploiement: tech/07-deployment.md
+      - Décisions (ADRs):
+          - Vue d'ensemble: tech/adrs/index.md
+          - "ADR 001 — Référentiel maison + mapping ESCO": tech/adrs/001-referentiel-maison-et-mapping-esco.md
+          - "ADR 002 — Archétypes par forme": tech/adrs/002-archetypes-par-forme.md
+          - "ADR 003 — k par silhouette pur": tech/adrs/003-k-par-silhouette-empirique.md
+          - "ADR 004 — LRC runbook vs submodule": tech/adrs/004-lrc-runbook-vs-submodule.md
+          - "ADR 005 — Profil DASES null": tech/adrs/005-profil-dases-null.md
+          - "ADR 006 — CSV custom vs mappers natifs": tech/adrs/006-csv-custom-vs-mappers-natifs.md
+          - "ADR 007 — mastered vs attempted": tech/adrs/007-mastered-vs-attempted.md
+  - Doc utilisateur (Diátaxis):
+      - Tutoriel — prise en main: user/tutorial/getting-started.md
+      - How-to:
+          - Régénérer le dataset: user/how-to/regenerate-dataset.md
+          - Ingérer via le LRC: user/how-to/ingest-via-lrc.md
+          - Appeler l'API: user/how-to/call-api.md
+      - Reference:
+          - API HTTP: user/reference/api.md
+          - Format des données: user/reference/data-format.md
+          - CLI: user/reference/cli.md
+      - Explication:
+          - Pourquoi SkillBridge: user/explanation/pourquoi.md
+  - Annexes:
+      - Cadrage v0: cadrage-dases-provider-v0.md
+      - Runbook LRC: lrc_runbook.md

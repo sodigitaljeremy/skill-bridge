@@ -72,3 +72,10 @@ markers = [
     "unit: fast, isolated unit tests",
     "integration: tests that touch external systems or multiple components",
 ]
+
+[dependency-groups]
+dev = [
+    "mkdocs>=1.6.1",
+    "mkdocs-material>=9.7.6",
+    "pymdown-extensions>=10.21.3",
+]

@@ -64,6 +64,9 @@ coverage.xml
 # Claude Code (local session state)
 .claude/
 
+# MkDocs build output
+site/
+
 # Environment / secrets
 .env
 .env.*

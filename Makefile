@@ -1,4 +1,4 @@
-.PHONY: help sync test test-all lint fmt api front demo dataset
+.PHONY: help sync test test-all lint fmt api front demo dataset docs docs-build
 
 help:  ## Affiche cette aide
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-12s %s\n", $$1, $$2}'
@@ -30,3 +30,9 @@ front:  ## Lance la vitrine Streamlit sur http://localhost:8501 (l'API doit déj
 
 demo:  ## Lance API + Streamlit ensemble (Ctrl-C pour tout arrêter)
 	bash scripts/run_demo.sh
+
+docs:  ## Sert la doc MkDocs en local sur http://localhost:8001
+	uv run mkdocs serve --dev-addr=0.0.0.0:8001
+
+docs-build:  ## Build la doc (mode strict) — sortie dans site/
+	uv run mkdocs build --strict
