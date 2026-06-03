@@ -1,4 +1,9 @@
-"""Recommandation : cible les domaines faibles, explication non vide, déjà-tenté exclu."""
+"""Recommandation : cible les domaines faibles, exclut les ressources MAÎTRISÉES.
+
+NB : "maîtrisée" = passée au moins une fois. Une ressource échouée reste recommandable
+(re-travail pédagogique). Cf. ADR-007 (à venir) et l'évolution du contrat
+``LearnerProfile.mastered_resource_ids``.
+"""
 
 import pytest
 
@@ -88,7 +93,8 @@ def test_recommendations_have_non_empty_explanations(reco_fixture) -> None:
 
 
 @pytest.mark.unit
-def test_recommendations_exclude_already_attempted(reco_fixture) -> None:
+def test_recommendations_exclude_already_mastered(reco_fixture) -> None:
+    """Une ressource déjà passée n'est jamais re-recommandée en phase nominale."""
     _learners, profiles, clustering, enriched, reco = reco_fixture
     lea = next(p for p in profiles if p.learner_id == LEA_LEARNER_ID)
     recos = reco.recommend(
@@ -98,9 +104,68 @@ def test_recommendations_exclude_already_attempted(reco_fixture) -> None:
         all_traces=enriched,
         top_n=10,
     )
-    attempted = set(lea.attempted_resource_ids)
+    mastered = set(lea.mastered_resource_ids)
     for r in recos:
-        assert r.resource_id not in attempted
+        assert r.resource_id not in mastered, (
+            f"{r.resource_id} déjà maîtrisée par Léa — ne devrait pas être recommandée"
+        )
+
+
+@pytest.mark.unit
+def test_failed_resources_are_eligible_for_recommendation(reco_fixture) -> None:
+    """Une ressource échouée (tentée mais non maîtrisée) DOIT pouvoir être re-proposée."""
+    _learners, profiles, clustering, enriched, reco = reco_fixture
+    lea = next(p for p in profiles if p.learner_id == LEA_LEARNER_ID)
+    failed_only = set(lea.attempted_resource_ids) - set(lea.mastered_resource_ids)
+    assert failed_only, "Léa devrait avoir au moins une ressource tentée mais non maîtrisée"
+
+    recos = reco.recommend(
+        learner_id=lea.learner_id,
+        profiles=profiles,
+        assignments=clustering.assignments,
+        all_traces=enriched,
+        top_n=10,
+    )
+    reco_ids = {r.resource_id for r in recos}
+    # Il faut qu'au moins une reco vienne du pool "échouée non maîtrisée" — c'est le
+    # comportement pédagogique visé.
+    assert reco_ids & failed_only, (
+        "Aucune ressource échouée n'est re-proposée — le nouveau filtre 'mastered' "
+        "doit autoriser le re-travail des échecs"
+    )
+
+
+@pytest.mark.unit
+def test_lea_receives_recommendations_on_full_dataset(sample_skills, sample_resources) -> None:
+    """Régression : sur la config par défaut (100 apprenants, seed=42), Léa doit avoir
+    des recos. C'est le cas qui avait échappé au test initial (N=60) — Léa avait alors
+    déjà tenté toutes les ressources de géométrie, et l'ancien filtre "non déjà tentée"
+    les éliminait toutes."""
+    gen = TraceGenerationService(skills=sample_skills, resources=sample_resources)
+    learners, traces = gen.generate(ScenarioConfig(n_learners=100, seed=42))
+    enricher = EnrichmentService(resources=sample_resources, skills=sample_skills)
+    enriched = [enricher.enrich(t) for t in traces]
+    profiles = LearnerProfileBuilder(sample_skills).build_all(learners, enriched)
+    domains = sorted({s.domain for s in sample_skills})
+    clustering = ClusteringService(domains=domains, k_min=2, k_max=8, seed=42).fit(profiles)
+    reco = RecommendationService(
+        resources=sample_resources,
+        skills=sample_skills,
+        embedder=StubEmbeddingProvider(),
+    )
+    recos = reco.recommend(
+        learner_id=LEA_LEARNER_ID,
+        profiles=profiles,
+        assignments=clustering.assignments,
+        all_traces=enriched,
+        top_n=5,
+    )
+    assert recos, (
+        "Léa doit recevoir au moins 1 reco sur le dataset complet (100 apprenants, seed=42)"
+    )
+    for r in recos:
+        assert r.weak_skills_targeted
+        assert r.explanation.strip()
 
 
 @pytest.mark.unit

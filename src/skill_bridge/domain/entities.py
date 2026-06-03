@@ -138,6 +138,13 @@ class LearnerProfile(BaseModel):
 
     Ne lit jamais ``Learner.ability`` (vérité latente). Utilisé comme features de
     clustering et input du moteur de recommandation.
+
+    Conventions :
+    - ``attempted_resource_ids`` : ressources avec **au moins 1 trace** (passed, failed,
+      ou completed). Conservé pour les stats / le front.
+    - ``mastered_resource_ids`` : ressources avec **au moins 1 trace ``passed``** (ou
+      ``completed`` pour les leçons). Critère pédagogique : un échec ne vaut pas maîtrise,
+      donc une ressource échouée peut (et doit) être re-recommandée dans un domaine faible.
     """
 
     model_config = ConfigDict(frozen=True)
@@ -149,6 +156,7 @@ class LearnerProfile(BaseModel):
     success_rate_per_domain: dict[str, float]
     mean_score_per_skill: dict[str, float]
     attempted_resource_ids: list[str]
+    mastered_resource_ids: list[str]
     n_traces: int = Field(ge=0)
 
 

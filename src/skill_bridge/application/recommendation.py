@@ -84,28 +84,59 @@ class RecommendationService:
         weakness_query = self._build_weakness_query(weak_skill_ids)
         query_embedding = self._embedder.embed([weakness_query])[0]
 
-        attempted = set(profile.attempted_resource_ids)
-        scored: list[Recommendation] = []
+        # Sélection en 3 phases :
+        #   1) grade ±1, hors maîtrisées (cas nominal — re-travail pédagogique)
+        #   2) grade ±2, hors maîtrisées (catalogue étroit dans le domaine ciblé)
+        #   3) grade ±1, incluant maîtrisées (dernier recours — rares apprenants ayant
+        #      tout maîtrisé dans leurs domaines faibles)
+        for max_grade_distance, allow_mastered in (
+            (1, False),
+            (2, False),
+            (1, True),
+        ):
+            candidates = list(
+                self._iter_candidates(
+                    profile=profile,
+                    weak_skill_ids=weak_skill_ids,
+                    max_grade_distance=max_grade_distance,
+                    allow_mastered=allow_mastered,
+                )
+            )
+            if candidates:
+                break
+        else:  # pragma: no cover — toutes phases vides
+            candidates = []
+
+        scored = [
+            self._score_resource(
+                resource=resource,
+                targeted_skill_ids=targeted,
+                profile=profile,
+                query_embedding=query_embedding,
+                peer_success=peer_success,
+            )
+            for resource, targeted in candidates
+        ]
+        scored.sort(key=lambda r: r.score, reverse=True)
+        return scored[:top_n]
+
+    def _iter_candidates(
+        self,
+        profile: LearnerProfile,
+        weak_skill_ids: set[str],
+        max_grade_distance: int,
+        allow_mastered: bool,
+    ):
+        mastered = set(profile.mastered_resource_ids)
         for resource in self._resources:
-            if resource.resource_id in attempted:
+            if not allow_mastered and resource.resource_id in mastered:
                 continue
-            if abs(resource.grade_level - profile.grade_level) > 1:
+            if abs(resource.grade_level - profile.grade_level) > max_grade_distance:
                 continue
             targeted = [sid for sid in resource.skill_ids if sid in weak_skill_ids]
             if not targeted:
                 continue
-            scored.append(
-                self._score_resource(
-                    resource=resource,
-                    targeted_skill_ids=targeted,
-                    profile=profile,
-                    query_embedding=query_embedding,
-                    peer_success=peer_success,
-                )
-            )
-
-        scored.sort(key=lambda r: r.score, reverse=True)
-        return scored[:top_n]
+            yield resource, targeted
 
     def recommend(
         self,

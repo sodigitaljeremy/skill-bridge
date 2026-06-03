@@ -41,9 +41,15 @@ class LearnerProfileBuilder:
         total_per_domain: dict[str, int] = defaultdict(int)
         scores_per_skill: dict[str, list[float]] = defaultdict(list)
         attempted: list[str] = []
+        # « maîtrisée » = ≥ 1 trace ``passed`` (exercice/quiz) ou ``completed`` (leçon).
+        # Choix le plus simple : un succès vaut maîtrise. Un échec NE retire pas la maîtrise
+        # acquise par un succès antérieur — pas de forgetting modélisé au Lot 1.
+        mastered: set[str] = set()
 
         for trace in traces:
             attempted.append(trace.resource_id)
+            if trace.verb in ("passed", "completed"):
+                mastered.add(trace.resource_id)
             if trace.score is None or not trace.skills:
                 continue
             primary_domain = trace.skills[0].domain
@@ -81,5 +87,6 @@ class LearnerProfileBuilder:
             success_rate_per_domain=success_rate_per_domain,
             mean_score_per_skill=mean_score_per_skill,
             attempted_resource_ids=sorted(set(attempted)),
+            mastered_resource_ids=sorted(mastered),
             n_traces=len(traces),
         )
