@@ -1,0 +1,30 @@
+{
+    "actor": {
+        "account": {
+            "name": "L\u00e9a Martin",
+            "homePage": "https://mathia.example.com"
+        }
+    },
+    "object": {
+        "id": "https://mathia.example.com/resource/EX011",
+        "definition": {
+            "name": {
+                "fr-FR": "Fractions simples - colorier"
+            },
+            "type": "http://adlnet.gov/expapi/activities/interaction"
+        }
+    },
+    "verb": {
+        "id": "http://adlnet.gov/expapi/verbs/passed",
+        "display": {
+            "en-US": "passed"
+        }
+    },
+    "result": {
+        "score": {
+            "scaled": 0.567
+        },
+        "completion": true
+    },
+    "timestamp": "2026-03-06T22:29:50+00:00"
+}

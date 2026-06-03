@@ -31,9 +31,15 @@ API_URL: str = os.environ.get("SKILLBRIDGE_API_URL", "http://localhost:8000")
 # streamlit_app.py est à src/skill_bridge/adapters/inbound/streamlit_app.py
 # → parents[4] = racine du repo (un niveau de moins que api/app.py qui descend dans api/).
 REPO_ROOT = Path(__file__).resolve().parents[4]
-LEARNERS_JSONL = REPO_ROOT / "data" / "generated" / "learners.jsonl"
-SAMPLE_CSV = REPO_ROOT / "data" / "generated" / "sample_mathia.csv"
-SAMPLE_LRC_JSONL = REPO_ROOT / "data" / "generated" / "traces_via_lrc.jsonl"
+
+# Fixtures committées dans data/seed/ — utilisées en PROD (où le LRC n'est pas en ligne
+# et où data/generated/ n'est pas regénéré). Le local dev privilégie data/generated/.
+GENERATED_LEARNERS = REPO_ROOT / "data" / "generated" / "learners.jsonl"
+FIXTURE_LEARNERS = REPO_ROOT / "data" / "seed" / "learners_fixture.jsonl"
+GENERATED_CSV = REPO_ROOT / "data" / "generated" / "sample_mathia.csv"
+FIXTURE_CSV = REPO_ROOT / "data" / "seed" / "interop_example" / "mathia_row.csv"
+GENERATED_LRC_JSONL = REPO_ROOT / "data" / "generated" / "traces_via_lrc.jsonl"
+FIXTURE_LRC_JSON = REPO_ROOT / "data" / "seed" / "interop_example" / "lrc_statement.json"
 
 st.set_page_config(
     page_title="SkillBridge — Data & AI provider",
@@ -163,13 +169,17 @@ def fetch_recommendations(learner_id: str, n: int) -> list[dict[str, Any]]:
 def load_ground_truth_local() -> dict[str, dict[str, Any]]:
     """Charge ``learners.jsonl`` LOCALEMENT (pas via l'API).
 
-    Vérité-terrain de simulation : utilisée uniquement pour la validation
-    archetype↔cluster sur la vue clustering. **Indisponible en production réelle.**
+    Vérité-terrain de simulation. Priorité :
+    1. ``data/generated/learners.jsonl`` (régénéré en local dev avec la seed courante)
+    2. ``data/seed/learners_fixture.jsonl`` (fixture committée pour la prod, seed=42)
+
+    Indisponible en production réelle — affichage explicite côté UI.
     """
-    if not LEARNERS_JSONL.exists():
+    path = GENERATED_LEARNERS if GENERATED_LEARNERS.exists() else FIXTURE_LEARNERS
+    if not path.exists():
         return {}
     out: dict[str, dict[str, Any]] = {}
-    with LEARNERS_JSONL.open(encoding="utf-8") as f:
+    with path.open(encoding="utf-8") as f:
         for line in f:
             if not line.strip():
                 continue
@@ -180,19 +190,28 @@ def load_ground_truth_local() -> dict[str, dict[str, Any]]:
 
 @st.cache_data(ttl=300)
 def load_interop_sample() -> tuple[str | None, dict[str, Any] | None]:
-    """Charge une ligne du sample CSV + le statement xAPI converti par le LRC."""
+    """Charge un avant/après réel d'une conversion LRC.
+
+    Priorité : ``data/generated/`` (frais d'un run local) puis fallback sur la fixture
+    ``data/seed/interop_example/`` (capture committée d'une vraie conversion LRC).
+    """
     csv_line: str | None = None
-    if SAMPLE_CSV.exists():
-        with SAMPLE_CSV.open(encoding="utf-8") as f:
+    if GENERATED_CSV.exists():
+        with GENERATED_CSV.open(encoding="utf-8") as f:
             header = f.readline()
             first = f.readline()
             csv_line = header + first if first else None
+    elif FIXTURE_CSV.exists():
+        csv_line = FIXTURE_CSV.read_text(encoding="utf-8")
+
     xapi_stmt: dict[str, Any] | None = None
-    if SAMPLE_LRC_JSONL.exists():
-        with SAMPLE_LRC_JSONL.open(encoding="utf-8") as f:
+    if GENERATED_LRC_JSONL.exists():
+        with GENERATED_LRC_JSONL.open(encoding="utf-8") as f:
             first = f.readline()
             if first.strip():
                 xapi_stmt = json.loads(first)
+    elif FIXTURE_LRC_JSON.exists():
+        xapi_stmt = json.loads(FIXTURE_LRC_JSON.read_text(encoding="utf-8"))
     return csv_line, xapi_stmt
 
 
