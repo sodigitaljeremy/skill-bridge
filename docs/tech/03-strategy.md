@@ -19,8 +19,9 @@ synthèse :
 | PLRS | Stockage simple ✅ | Enrichi | Intégration Cozy Cloud |
 | Front | Streamlit ✅ | Soigné ✅ | — |
 
-Tous les check verts sont déjà commités. **Le PDC réel est le périmètre du Lot 4**, le
-déploiement Coolify celui du Lot 5d.
+Tous les check verts sont déjà commités. Le **Lot 5d** (déploiement Coolify sur VPS
+Hetzner) est livré : vitrine, API et doc en ligne sous `skillbridge-data.fr`. Reste le
+**Lot 4** (échange réel via le PDC), seul lot ouvert.
 
 ## Découpage par lots
 
@@ -33,11 +34,11 @@ flowchart LR
     L5a["Lot 5a<br/>API FastAPI"]:::done
     L5b["Lot 5b<br/>Vitrine Streamlit"]:::done
     L5c["Lot 5c<br/>Doc MkDocs"]:::done
+    L5d["Lot 5d<br/>Déploiement Coolify"]:::done
     L4["Lot 4<br/>PDC réel"]:::todo
-    L5d["Lot 5d<br/>Déploiement"]:::todo
 
-    L0 --> L1 --> L2 --> L3 --> L5a --> L5b --> L5c
-    L5c --> L4 --> L5d
+    L0 --> L1 --> L2 --> L3 --> L5a --> L5b --> L5c --> L5d
+    L5d --> L4
 
     classDef done fill:#e0f2f1,stroke:#00897b
     classDef todo fill:#f5f5f5,stroke:#999,stroke-dasharray: 4 2

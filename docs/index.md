@@ -49,8 +49,9 @@ flowchart LR
   [ADR 005](tech/adrs/005-profil-dases-null.md),
   [ADR 006](tech/adrs/006-csv-custom-vs-mappers-natifs.md))
 - **Lot 5a/b** — API FastAPI (OpenAPI 3 sur `/docs`) + vitrine Streamlit consommant l'API
+- **Lot 5c/d** — documentation MkDocs Material + déploiement sur VPS Hetzner via Coolify :
+  vitrine, API et doc en ligne sous `skillbridge-data.fr`
 - **Lot 4** (à venir) — déploiement du PDC réel
-- **Lot 5d** (à venir) — déploiement Coolify / Hetzner
 
 ## Pour démarrer
 
@@ -78,6 +79,13 @@ Cette démo expose ses limites assumées plutôt que les masquer :
 
 ## Liens
 
-- [API live](http://localhost:8000/docs) (Swagger interactif, quand `make api` tourne)
+**En ligne :**
+
+- 🎓 [**Vitrine Streamlit**](https://skillbridge-data.fr) — `skillbridge-data.fr`
+- 🔌 [**API live + Swagger**](https://api.skillbridge-data.fr/docs) — `api.skillbridge-data.fr`
+- 📖 [**Doc (ce site)**](https://docs.skillbridge-data.fr) — `docs.skillbridge-data.fr`
+
+**Code et cadrage :**
+
 - [Repo GitHub](https://github.com/sodigitaljeremy/skill-bridge)
 - [Cadrage v0 — intention complète](cadrage-dases-provider-v0.md)

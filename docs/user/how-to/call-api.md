@@ -3,9 +3,15 @@
 L'API SkillBridge est en **lecture seule** et publie une spec OpenAPI 3. Tu peux
 l'appeler depuis n'importe quel client HTTP — voici les recettes courantes.
 
-## Pré-requis
+## URL de base
 
-L'API doit tourner sur `http://localhost:8000` (`make api` ou `make demo`).
+- **En ligne (prod)** : `https://api.skillbridge-data.fr` — Swagger interactif sur
+  [`/docs`](https://api.skillbridge-data.fr/docs).
+- **Local (dev)** : `http://localhost:8000` une fois `make api` (ou `make demo`)
+  lancé.
+
+Les exemples ci-dessous utilisent `http://localhost:8000` ; remplace simplement par
+`https://api.skillbridge-data.fr` pour viser la prod.
 
 ## curl
 
@@ -62,8 +68,9 @@ npx @openapitools/openapi-generator-cli generate -i openapi.json -g typescript-f
 ## Notes
 
 - Tous les endpoints sont **idempotents** et **lecture seule** (`GET`).
-- Pas d'auth : exposer prudemment. En prod (Lot 5d), la cible est derrière Traefik /
-  Coolify avec auth.
+- L'instance prod (`api.skillbridge-data.fr`) est **publique sans auth** — c'est une
+  démo. Pour un usage plus protégé, il suffit d'ajouter une basic auth Traefik côté
+  Coolify (cf. [Déployer sur Coolify](deploy-coolify.md)).
 - Les recos sont **préchargées au boot** (top-10 par apprenant). Passer `n=3` slice les
   3 premières du cache — la résolution est instantanée.
 - Référence complète des routes et schémas : [Reference — API HTTP](../reference/api.md).

@@ -1,9 +1,11 @@
 # Reference — API HTTP
 
-Spec OpenAPI 3 complète : http://localhost:8000/openapi.json
-Swagger interactif : http://localhost:8000/docs
-
 Cette page résume les 6 endpoints. Pour les schémas Pydantic détaillés, voir Swagger.
+
+| Cible | Base | Swagger interactif | OpenAPI brut |
+| --- | --- | --- | --- |
+| 🌐 Prod (en ligne) | `https://api.skillbridge-data.fr` | [/docs](https://api.skillbridge-data.fr/docs) | [/openapi.json](https://api.skillbridge-data.fr/openapi.json) |
+| 💻 Local (`make api`) | `http://localhost:8000` | `/docs` | `/openapi.json` |
 
 ## `GET /health`
 
